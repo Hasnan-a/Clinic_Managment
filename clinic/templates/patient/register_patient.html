@@ -1,0 +1,108 @@
+{% extends "base.html" %}
+
+{% block content %}
+<style>
+    .form-box { padding: 12px 0 32px 0; width: 100%; box-sizing: border-box; }
+    .form-head { margin-bottom: 16px; }
+    .form-head h2 { font-size: 20px; font-weight: 800; color: #0F172A; margin: 0; }
+    .form-head p { font-size: 13px; color: #64748B; margin: 2px 0 0; }
+
+    /* ALERT MESSAGES */
+    .alert-banner { padding: 12px 16px; border-radius: 10px; margin-bottom: 16px; font-size: 13px; font-weight: 600; display: flex; align-items: center; gap: 8px; }
+    .alert-error { background: #FEF2F2; color: #DC2626; border: 1px solid #FECACA; }
+    .alert-success { background: #F0FDF4; color: #16A34A; border: 1px solid #BBF7D0; }
+
+    .card-form { background: #fff; border: 1px solid #E2E8F0; border-radius: 14px; padding: 22px; box-shadow: 0 1px 3px rgba(0,0,0,0.02); }
+    .form-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-bottom: 20px; }
+    .form-group { display: flex; flex-direction: column; gap: 5px; }
+    .form-group label { font-size: 12px; font-weight: 700; color: #334155; }
+    .form-input { padding: 10px 12px; border: 1px solid #E2E8F0; border-radius: 8px; font-size: 13px; outline: none; background: #fff; }
+    .form-input:focus { border-color: #2563EB; }
+
+    .form-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 10px; }
+    .btn-save { background: #2563EB; color: #fff; border: none; padding: 11px 22px; border-radius: 8px; font-size: 13px; font-weight: 700; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; }
+    .btn-save:hover { background: #1D4ED8; }
+    .btn-cancel { background: #F1F5F9; color: #475569; border: 1px solid #E2E8F0; padding: 10px 18px; border-radius: 8px; font-size: 13px; font-weight: 600; text-decoration: none; }
+
+    @media (max-width: 900px) { .form-grid { grid-template-columns: 1fr; } }
+
+    /* DARK MODE */
+    body.dark-mode .form-head h2, body.dark-mode .form-group label { color: #F8FAFC !important; }
+    body.dark-mode .card-form { background: #1E293B !important; border-color: #334155 !important; }
+    body.dark-mode .form-input { background: #0F172A; border-color: #334155; color: #F8FAFC; }
+    body.dark-mode .btn-cancel { background: #334155; color: #E2E8F0; border-color: #475569; }
+</style>
+
+<div class="form-box">
+    <div class="form-head">
+        <h2>Register New Patient</h2>
+        <p>Enter patient personal and medical contact details to assign a medical record (MR) number.</p>
+    </div>
+
+    <!-- DJANGO MESSAGES -->
+    {% if messages %}
+        {% for message in messages %}
+            <div class="alert-banner alert-{{ message.tags }}">
+                <i class="bi bi-info-circle-fill"></i> {{ message }}
+            </div>
+        {% endfor %}
+    {% endif %}
+
+    <div class="card-form">
+        <!-- REAL DJANGO POST FORM -->
+        <form method="POST" action="{% url 'register_patient' %}">
+            {% csrf_token %}
+            <div class="form-grid">
+                <div class="form-group">
+                    <label>Full Patient Name *</label>
+                    <input type="text" name="full_name" class="form-input" placeholder="e.g. Ali Raza" required>
+                </div>
+                <div class="form-group">
+                    <label>Phone / WhatsApp *</label>
+                    <input type="text" name="phone" class="form-input" placeholder="e.g. 0300-1234567" required>
+                </div>
+                <div class="form-group">
+                    <label>CNIC / B-Form</label>
+                    <input type="text" name="cnic" class="form-input" placeholder="35201-xxxxxxx-x">
+                </div>
+                <div class="form-group">
+                    <label>Age (Years) *</label>
+                    <input type="number" name="age" class="form-input" placeholder="e.g. 32" required min="1" max="130">
+                </div>
+                <div class="form-group">
+                    <label>Gender *</label>
+                    <select name="gender" class="form-input" required>
+                        <option value="">Select Gender</option>
+                        <option value="Male">Male</option>
+                        <option value="Female">Female</option>
+                        <option value="Other">Other</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Blood Group</label>
+                    <select name="blood_group" class="form-input">
+                        <option value="">Unknown</option>
+                        <option value="A+">A+</option><option value="A-">A-</option>
+                        <option value="B+">B+</option><option value="B-">B-</option>
+                        <option value="O+">O+</option><option value="O-">O-</option>
+                        <option value="AB+">AB+</option><option value="AB-">AB-</option>
+                    </select>
+                </div>
+                <div class="form-group" style="grid-column: span 2;">
+                    <label>Address / Area</label>
+                    <input type="text" name="address" class="form-input" placeholder="e.g. House 12, Street 4, Lahore">
+                </div>
+                <div class="form-group">
+                    <label>Emergency Contact</label>
+                    <input type="text" name="emergency_contact" class="form-input" placeholder="Name & Phone Number">
+                </div>
+            </div>
+
+            <div class="form-actions">
+                <a href="{% url 'patient_list' %}" class="btn-cancel">Cancel</a>
+                <button type="submit" class="btn-save"><i class="bi bi-check-circle"></i> Save Patient</button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

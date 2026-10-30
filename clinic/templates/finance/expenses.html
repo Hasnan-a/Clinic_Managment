@@ -1,0 +1,119 @@
+{% extends "base.html" %}
+
+{% block content %}
+<style>
+    .exp-box { padding: 12px 0 32px 0; width: 100%; box-sizing: border-box; }
+    .exp-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; flex-wrap: wrap; gap: 12px; }
+    .exp-top h2 { font-size: 20px; font-weight: 800; color: #0F172A; margin: 0; }
+    .btn-add { background: #2563EB; color: white; padding: 9px 16px; border-radius: 9px; font-size: 13px; font-weight: 700; text-decoration: none; display: inline-flex; align-items: center; gap: 7px; }
+
+    .filter-bar { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 14px; align-items: center; }
+    .filter-bar .inp { padding: 9px 10px; border: 1px solid #E2E8F0; border-radius: 8px; font-size: 13px; background: #fff; color: #0F172A; }
+    .btn-filter { background: #0F172A; color: #fff; border: none; padding: 9px 16px; border-radius: 8px; font-size: 13px; font-weight: 700; cursor: pointer; }
+    .btn-clear { font-size: 13px; color: #64748B; text-decoration: none; }
+
+    .total-strip { display: flex; gap: 20px; margin-bottom: 14px; font-size: 13px; color: #475569; flex-wrap: wrap; }
+    .total-strip strong { color: #DC2626; font-size: 15px; }
+
+    .card-wrap { background: #fff; border: 1px solid #E2E8F0; border-radius: 14px; padding: 18px; }
+    .e-table { width: 100%; border-collapse: collapse; text-align: left; }
+    .e-table th { font-size: 11px; font-weight: 700; color: #64748B; text-transform: uppercase; padding: 10px; border-bottom: 1px solid #E2E8F0; }
+    .e-table td { padding: 12px 10px; font-size: 12.5px; color: #0F172A; border-bottom: 1px solid #F1F5F9; }
+    .badge-cat { background: #F1F5F9; color: #475569; padding: 3px 8px; border-radius: 6px; font-weight: 700; font-size: 11px; }
+
+    .act { font-size: 12px; font-weight: 700; text-decoration: none; background: none; border: none; cursor: pointer; padding: 0; }
+    .act-edit { color: #2563EB; margin-right: 12px; }
+    .act-del { color: #DC2626; }
+
+    .alert-banner { padding: 12px 16px; border-radius: 10px; margin-bottom: 16px; font-size: 13px; font-weight: 600; }
+    .alert-success { background: #F0FDF4; color: #16A34A; border: 1px solid #BBF7D0; }
+    .alert-error { background: #FEF2F2; color: #DC2626; border: 1px solid #FECACA; }
+
+    /* DARK MODE */
+    body.dark-mode .exp-top h2, body.dark-mode .e-table td { color: #F8FAFC !important; }
+    body.dark-mode .card-wrap { background: #1E293B !important; border-color: #334155 !important; }
+    body.dark-mode .e-table th { color: #94A3B8; border-color: #334155; }
+    body.dark-mode .e-table td { border-color: #334155; }
+    body.dark-mode .badge-cat { background: #334155; color: #E2E8F0; }
+    body.dark-mode .filter-bar .inp { background: #0F172A; border-color: #334155; color: #F8FAFC; }
+    body.dark-mode .btn-filter { background: #2563EB; }
+</style>
+
+<div class="exp-box">
+    {% for message in messages %}
+        <div class="alert-banner alert-{{ message.tags }}">{{ message }}</div>
+    {% endfor %}
+
+    <div class="exp-top">
+        <div>
+            <h2>Clinic Expenses</h2>
+            <p style="font-size: 13px; color: #64748B; margin: 2px 0 0;">Track daily utilities, medical supplies, and maintenance expenses.</p>
+        </div>
+        <a href="{% url 'add_expense' %}" class="btn-add"><i class="bi bi-plus-lg"></i> Add Expense</a>
+    </div>
+
+    <form method="GET" class="filter-bar">
+        <input type="text" name="q" value="{{ q }}" class="inp" placeholder="Search title / voucher...">
+        <select name="category" class="inp">
+            <option value="">All Categories</option>
+            {% for value, label in categories %}
+                <option value="{{ value }}" {% if selected_category == value %}selected{% endif %}>{{ label }}</option>
+            {% endfor %}
+        </select>
+        <input type="month" name="month" value="{{ month_str }}" class="inp">
+        <button type="submit" class="btn-filter">Filter</button>
+        {% if q or selected_category or month_str %}
+            <a href="{% url 'expenses' %}" class="btn-clear">Clear</a>
+        {% endif %}
+    </form>
+
+    <div class="total-strip">
+        <span>Records: <strong style="color:#0F172A;">{{ total_count }}</strong></span>
+        <span>Total: <strong>Rs. {{ total_amount|floatformat:"0g" }}</strong></span>
+    </div>
+
+    <div class="card-wrap">
+        <div style="overflow-x: auto;">
+            <table class="e-table">
+                <thead>
+                    <tr>
+                        <th>Voucher #</th>
+                        <th>Title / Reason</th>
+                        <th>Category</th>
+                        <th>Amount</th>
+                        <th>Date</th>
+                        <th>Payment Method</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for e in expenses %}
+                    <tr>
+                        <td><strong>#{{ e.voucher_number }}</strong></td>
+                        <td>{{ e.title }}</td>
+                        <td><span class="badge-cat">{{ e.category }}</span></td>
+                        <td><strong style="color: #DC2626;">Rs. {{ e.amount|floatformat:"0g" }}</strong></td>
+                        <td>{{ e.date|date:"M d, Y" }}</td>
+                        <td>{{ e.payment_method }}</td>
+                        <td style="display:flex; align-items:center;">
+                            <a href="{% url 'edit_expense' e.pk %}" class="act act-edit">Edit</a>
+                            <form method="POST" action="{% url 'delete_expense' e.pk %}" style="margin:0;"
+                                  onsubmit="return confirm('Expense {{ e.voucher_number }} delete karna hai?');">
+                                {% csrf_token %}
+                                <button type="submit" class="act act-del">Delete</button>
+                            </form>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="7" style="text-align:center; padding:24px; color:#64748B;">
+                            Koi expense nahi mila. <a href="{% url 'add_expense' %}">Pehla expense add karein</a>.
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

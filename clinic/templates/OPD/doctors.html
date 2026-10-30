@@ -1,0 +1,79 @@
+{% extends "base.html" %}
+
+{% block content %}
+<style>
+    .doc-grid { display: grid; grid-template-columns: 1fr 1.6fr; gap: 16px; padding: 12px 0 32px; }
+    .card-panel { background: #fff; border: 1px solid #E2E8F0; border-radius: 14px; padding: 22px; }
+    .card-panel h3 { margin: 0 0 16px; font-size: 16px; font-weight: 700; color: #0F172A; }
+    .f-group { display: flex; flex-direction: column; gap: 5px; margin-bottom: 12px; }
+    .f-group label { font-size: 12px; font-weight: 700; color: #475569; }
+    .f-input { padding: 10px; border: 1px solid #E2E8F0; border-radius: 8px; font-size: 13px; width: 100%; box-sizing: border-box; }
+    .btn-save { background: #10B981; color: #fff; border: none; width: 100%; padding: 12px; border-radius: 9px; font-weight: 700; cursor: pointer; }
+    .btn-cancel { display: block; text-align: center; margin-top: 8px; font-size: 13px; color: #64748B; text-decoration: none; }
+    table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    th { text-align: left; padding: 10px; color: #475569; border-bottom: 1px solid #E2E8F0; }
+    td { padding: 10px; border-bottom: 1px solid #F1F5F9; color: #0F172A; }
+    .badge { padding: 3px 10px; border-radius: 20px; font-size: 11px; font-weight: 700; }
+    .b-on { background: #F0FDF4; color: #16A34A; }
+    .b-off { background: #FEF2F2; color: #DC2626; }
+    .act { font-size: 12px; font-weight: 700; text-decoration: none; color: #2563EB; background: none; border: none; cursor: pointer; padding: 0; margin-right: 10px; }
+    .alert-banner { padding: 12px 16px; border-radius: 10px; margin-bottom: 12px; font-size: 13px; font-weight: 600; background: #F0FDF4; color: #16A34A; border: 1px solid #BBF7D0; }
+    @media (max-width: 900px) { .doc-grid { grid-template-columns: 1fr; } }
+    body.dark-mode .card-panel { background: #1E293B !important; border-color: #334155 !important; }
+    body.dark-mode .card-panel h3, body.dark-mode td, body.dark-mode .f-group label { color: #F8FAFC !important; }
+    body.dark-mode .f-input { background: #0F172A; border-color: #334155; color: #F8FAFC; }
+</style>
+
+{% for message in messages %}
+    <div class="alert-banner">{{ message }}</div>
+{% endfor %}
+
+<div class="doc-grid">
+    <!-- ADD / EDIT FORM -->
+    <div class="card-panel">
+        <h3>{% if edit_doctor %}Edit Doctor{% else %}Add New Doctor{% endif %}</h3>
+        <form method="POST">
+            {% csrf_token %}
+            <div class="f-group"><label>Name *</label>{{ form.name }}{{ form.name.errors }}</div>
+            <div class="f-group"><label>Specialization</label>{{ form.specialization }}</div>
+            <div class="f-group"><label>Room Number</label>{{ form.room_number }}</div>
+            <div class="f-group"><label>Consultation Fee (PKR)</label>{{ form.fee }}{{ form.fee.errors }}</div>
+            <div class="f-group"><label>{{ form.is_active }} Active (booking mein dikhe)</label></div>
+            <button type="submit" class="btn-save">{% if edit_doctor %}Update Doctor{% else %}Add Doctor{% endif %}</button>
+            {% if edit_doctor %}<a href="{% url 'doctor_list' %}" class="btn-cancel">Cancel</a>{% endif %}
+        </form>
+    </div>
+
+    <!-- DOCTORS LIST -->
+    <div class="card-panel">
+        <h3>All Doctors ({{ doctors|length }})</h3>
+        <table>
+            <thead>
+                <tr><th>Name</th><th>Specialization</th><th>Room</th><th>Fee</th><th>Status</th><th>Action</th></tr>
+            </thead>
+            <tbody>
+            {% for d in doctors %}
+                <tr>
+                    <td><strong>{{ d.name }}</strong></td>
+                    <td>{{ d.specialization }}</td>
+                    <td>{{ d.room_number }}</td>
+                    <td>Rs. {{ d.fee }}</td>
+                    <td><span class="badge {% if d.is_active %}b-on{% else %}b-off{% endif %}">{% if d.is_active %}Active{% else %}Inactive{% endif %}</span></td>
+                    <td style="display:flex; align-items:center;">
+                        <a href="{% url 'doctor_edit' d.pk %}" class="act">Edit</a>
+                        <form method="POST" action="{% url 'doctor_toggle' d.pk %}" style="margin:0;">
+                            {% csrf_token %}
+                            <button type="submit" class="act" style="color: {% if d.is_active %}#DC2626{% else %}#16A34A{% endif %};">
+                                {% if d.is_active %}Deactivate{% else %}Activate{% endif %}
+                            </button>
+                        </form>
+                    </td>
+                </tr>
+            {% empty %}
+                <tr><td colspan="6" style="text-align:center; padding:20px;">Abhi koi doctor nahi hai. Left side se add karein.</td></tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

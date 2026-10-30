@@ -1,0 +1,230 @@
+{% extends "base.html" %}
+
+{% block content %}
+<style>
+    .book-box { padding: 12px 0 32px 0; width: 100%; box-sizing: border-box; }
+    .book-grid { display: grid; grid-template-columns: 1.4fr 1fr; gap: 16px; }
+    .card-panel { background: #fff; border: 1px solid #E2E8F0; border-radius: 14px; padding: 22px; box-shadow: 0 1px 3px rgba(0,0,0,0.02); }
+    .card-panel h3 { margin: 0 0 16px 0; font-size: 16px; font-weight: 700; color: #0F172A; display: flex; align-items: center; gap: 8px; }
+
+    .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 14px; }
+    .f-group { display: flex; flex-direction: column; gap: 5px; }
+    .f-group label { font-size: 12px; font-weight: 700; color: #475569; }
+    .f-input { padding: 10px; border: 1px solid #E2E8F0; border-radius: 8px; font-size: 13px; outline: none; background: #fff; color: #0F172A; }
+    .f-input:focus { border-color: #2563EB; }
+
+    .btn-token { background: #10B981; color: white; border: none; width: 100%; padding: 13px; border-radius: 9px; font-size: 14px; font-weight: 700; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; margin-top: 10px; }
+    .btn-token:hover { background: #059669; }
+    .btn-token:disabled { background: #94A3B8; cursor: not-allowed; }
+
+    .alert-banner { padding: 12px 16px; border-radius: 10px; margin-bottom: 16px; font-size: 13px; font-weight: 600; display: flex; align-items: center; gap: 8px; }
+    .alert-success { background: #F0FDF4; color: #16A34A; border: 1px solid #BBF7D0; }
+    .alert-error { background: #FEF2F2; color: #DC2626; border: 1px solid #FECACA; }
+
+    /* TOKEN SLIP PREVIEW */
+    .slip-box { border: 2px dashed #CBD5E1; border-radius: 12px; padding: 20px; text-align: center; background: #F8FAFC; }
+    .slip-title { font-size: 16px; font-weight: 800; color: #0F172A; margin: 0; }
+    .slip-num { font-size: 46px; font-weight: 900; color: #2563EB; margin: 10px 0; line-height: 1; }
+    .slip-doctor { font-size: 13px; font-weight: 700; color: #10B981; text-transform: uppercase; }
+    .slip-details { font-size: 12px; color: #475569; text-align: left; border-top: 1px solid #E2E8F0; padding-top: 12px; margin-top: 12px; display: flex; flex-direction: column; gap: 6px; }
+
+    .btn-print-now { margin-top: 14px; width: 100%; padding: 10px; background: #0F172A; color: white; border: none; border-radius: 8px; font-size: 13px; font-weight: 700; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px; }
+    .btn-print-now:hover { background: #1E293B; }
+
+    @media (max-width: 900px) { .book-grid { grid-template-columns: 1fr; } }
+
+    /* DARK MODE */
+    body.dark-mode .card-panel h3, body.dark-mode .f-group label, body.dark-mode .slip-title { color: #F8FAFC !important; }
+    body.dark-mode .card-panel { background: #1E293B !important; border-color: #334155 !important; }
+    body.dark-mode .f-input { background: #0F172A; border-color: #334155; color: #F8FAFC; }
+    body.dark-mode .slip-box { background: #0F172A; border-color: #334155; }
+    body.dark-mode .slip-details { color: #94A3B8; border-color: #334155; }
+    body.dark-mode .btn-print-now { background: #2563EB; }
+
+    /* THERMAL PRINT STYLE */
+    @media print {
+        body * { visibility: hidden; }
+        #print-area, #print-area * { visibility: visible; }
+        #print-area { position: fixed; left: 0; top: 0; width: 300px; border: none; background: white; color: black; padding: 10px; }
+        .btn-print-now { display: none !important; }
+    }
+</style>
+
+<div class="book-box">
+    {% if messages %}
+        {% for message in messages %}
+            <div class="alert-banner alert-{{ message.tags }}">
+                <i class="bi bi-info-circle-fill"></i> {{ message }}
+            </div>
+        {% endfor %}
+    {% endif %}
+
+    <div class="book-grid">
+        <!-- FORM -->
+        <div class="card-panel">
+            <h3><i class="bi bi-ticket-perforated-fill text-primary"></i> Issue OPD Consultation Token</h3>
+
+            <form method="POST" action="{% url 'book_token' %}">
+                {% csrf_token %}
+                <div class="form-row">
+                    <div class="f-group" style="grid-column: span 2;">
+                        <label>Select Patient (MR# - Name - Phone) *</label>
+                        <select name="patient_id" id="patientSelect" class="f-input" required onchange="updateSlipPreview()">
+                            <option value="">-- Choose Patient --</option>
+                            {% for p in patients %}
+                                <option value="{{ p.id }}" data-mr="{{ p.mr_number }}" data-name="{{ p.name }}">
+                                    #{{ p.mr_number }} - {{ p.name }} ({{ p.phone }})
+                                </option>
+                            {% endfor %}
+                        </select>
+                        <small style="margin-top: 4px;">
+                            <a href="{% url 'register_patient' %}" style="color: #2563EB; text-decoration: none; font-size: 11.5px; font-weight: 600;">
+                                + New Patient? Register here first
+                            </a>
+                        </small>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="f-group">
+                        <label>Consulting Doctor *</label>
+                        <select name="doctor_id" id="doctorSelect" class="f-input" required onchange="onDoctorChange()">
+                            {% for d in doctors %}
+                                <option value="{{ d.id }}" data-name="{{ d.name }}" data-room="{{ d.room_number }}"
+                                        data-fee="{{ d.fee }}" data-spec="{{ d.specialization }}">
+                                    {{ d.name }} ({{ d.room_number }})
+                                </option>
+                            {% empty %}
+                                <option value="">-- Koi active doctor nahi --</option>
+                            {% endfor %}
+                        </select>
+                        <small style="margin-top: 4px;">
+                            <a href="{% url 'doctor_list' %}" style="color: #2563EB; text-decoration: none; font-size: 11.5px; font-weight: 600;">
+                                + Doctors manage karein
+                            </a>
+                        </small>
+                    </div>
+                    <div class="f-group">
+                        <label>Department</label>
+                        <input type="text" id="deptInput" class="f-input" value="" readonly>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="f-group">
+                        <label>Consultation Fee (PKR) *</label>
+                        <input type="number" name="fee" id="feeInput" class="f-input" value="1500" min="0" required oninput="updateSlipPreview()">
+                    </div>
+                    <div class="f-group">
+                        <label>Payment Method</label>
+                        <select name="payment_method" id="payMethodSelect" class="f-input" onchange="updateSlipPreview()">
+                            <option value="Cash">Cash</option>
+                            <option value="Online">Online Transfer / EasyPaisa</option>
+                            <option value="Card">Card</option>
+                        </select>
+                    </div>
+                </div>
+
+                <button type="submit" class="btn-token" {% if not doctors %}disabled{% endif %}>
+                    <i class="bi bi-printer-fill"></i> Generate & Issue Token
+                </button>
+            </form>
+        </div>
+
+        <!-- SLIP PREVIEW -->
+        <div class="card-panel">
+            <h3><i class="bi bi-receipt"></i> {% if latest_token %}Issued Slip Preview{% else %}Live Slip Preview{% endif %}</h3>
+
+            <div class="slip-box" id="print-area">
+                <h4 class="slip-title">ClinicMS Hospital</h4>
+                <small style="color: #64748B;">OPD TOKEN SLIP</small>
+
+                <div class="slip-num" id="slipNum">
+                    {% if latest_token %}#{{ latest_token.token_number|stringformat:"02d" }}{% else %}#{{ next_token_number|stringformat:"02d" }}{% endif %}
+                </div>
+
+                <div class="slip-doctor" id="slipDocRoom">
+                    {% if latest_token %}
+                        {{ latest_token.room_number }} &bull; {{ latest_token.doctor.name }}
+                    {% else %}
+                        Select a Doctor
+                    {% endif %}
+                </div>
+
+                <div class="slip-details">
+                    <div>
+                        <strong>Patient:</strong>
+                        <span id="slipPatient">
+                            {% if latest_token %}{{ latest_token.patient.name }} (#{{ latest_token.patient.mr_number }}){% else %}Select a Patient{% endif %}
+                        </span>
+                    </div>
+                    <div>
+                        <strong>Date/Time:</strong>
+                        <span id="slipDateTime">
+                            {% if latest_token %}{{ latest_token.created_at|date:"M d, Y - h:i A" }}{% else %}Today{% endif %}
+                        </span>
+                    </div>
+                    <div>
+                        <strong>Fee:</strong>
+                        <span id="slipFee">
+                            {% if latest_token %}Rs. {{ latest_token.fee }} (Paid - {{ latest_token.payment_method }}){% else %}Rs. 1,500 (Paid - Cash){% endif %}
+                        </span>
+                    </div>
+                    <div>
+                        <strong>Status:</strong>
+                        <span id="slipStatus" style="color: #2563EB; font-weight: 700;">
+                            {% if latest_token %}{{ latest_token.status }}{% else %}Ready to Book{% endif %}
+                        </span>
+                    </div>
+                </div>
+
+                <button type="button" class="btn-print-now" onclick="window.print();">
+                    <i class="bi bi-printer"></i> Print Token Slip
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function onDoctorChange() {
+    // Doctor badla to uski fee dobara lagao
+    delete document.getElementById('feeInput').dataset.userEdited;
+    updateSlipPreview();
+}
+
+function updateSlipPreview() {
+    const pSel = document.getElementById('patientSelect');
+    const dSel = document.getElementById('doctorSelect');
+    const feeInp = document.getElementById('feeInput');
+    const paySel = document.getElementById('payMethodSelect');
+
+    const selectedPatient = pSel.options[pSel.selectedIndex];
+    if (selectedPatient && selectedPatient.value) {
+        document.getElementById('slipPatient').textContent =
+            selectedPatient.getAttribute('data-name') + ' (#' + selectedPatient.getAttribute('data-mr') + ')';
+    }
+
+    const selectedDoc = dSel.options[dSel.selectedIndex];
+    if (selectedDoc && selectedDoc.value) {
+        document.getElementById('slipDocRoom').textContent =
+            selectedDoc.getAttribute('data-room') + ' • ' + selectedDoc.getAttribute('data-name');
+        document.getElementById('deptInput').value = selectedDoc.getAttribute('data-spec');
+
+        const docFee = selectedDoc.getAttribute('data-fee');
+        if (docFee && !feeInp.dataset.userEdited) {
+            feeInp.value = docFee;
+        }
+    }
+
+    document.getElementById('slipFee').textContent =
+        'Rs. ' + Number(feeInp.value || 0).toLocaleString() + ' (Paid - ' + paySel.value + ')';
+}
+
+document.getElementById('feeInput').addEventListener('input', function() {
+    this.dataset.userEdited = "true";
+});
+
+window.addEventListener('DOMContentLoaded', updateSlipPreview);
+</script>
+{% endblock %}

@@ -1,0 +1,390 @@
+<nav id="erp-sidebar" class="erp-sidebar" aria-label="Main navigation">
+
+    <!-- BRAND -->
+    <div class="sidebar-brand">
+        <div class="sidebar-brand-icon" aria-hidden="true">
+            <i class="bi bi-heart-pulse-fill"></i>
+        </div>
+        <div class="sidebar-brand-text">
+            <span class="brand-name">ClinicMS</span>
+            <span class="brand-sub">Management System</span>
+        </div>
+        <button id="sidebar-toggle-btn"
+                class="sidebar-toggle-btn"
+                type="button"
+                aria-label="Toggle sidebar"
+                aria-expanded="true"
+                aria-controls="erp-sidebar">
+            <i id="sidebar-toggle-icon" class="bi bi-chevron-double-left"></i>
+        </button>
+    </div>
+
+    <!-- NAVIGATION -->
+    <div class="sidebar-nav">
+
+        <!-- Overview -->
+        <span class="sidebar-section-label">Overview</span>
+        <div class="sidebar-nav-item {% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}">
+            <a href="{% url 'dashboard' %}" class="sidebar-nav-link" data-tooltip="Dashboard">
+                <i class="bi bi-speedometer2 sidebar-nav-icon"></i>
+                <span class="sidebar-nav-text">Dashboard</span>
+            </a>
+        </div>
+
+        <!-- Patients -->
+        <span class="sidebar-section-label">Patients</span>
+        <div class="sidebar-nav-item {% if request.resolver_match.url_name == 'patient_list' %}active{% endif %}">
+            <a href="{% url 'patient_list' %}" class="sidebar-nav-link" data-tooltip="Patient List">
+                <i class="bi bi-people-fill sidebar-nav-icon"></i>
+                <span class="sidebar-nav-text">Patient List</span>
+            </a>
+        </div>
+        <div class="sidebar-nav-item {% if request.resolver_match.url_name == 'register_patient' %}active{% endif %}">
+            <a href="{% url 'register_patient' %}" class="sidebar-nav-link" data-tooltip="Register Patient">
+                <i class="bi bi-person-plus-fill sidebar-nav-icon"></i>
+                <span class="sidebar-nav-text">Register Patient</span>
+            </a>
+        </div>
+
+         <span class="sidebar-section-label">Doctors</span>
+        <div class="sidebar-nav-item {% if request.resolver_match.url_name == 'doctor_list' or request.resolver_match.url_name == 'doctor_edit' %}active{% endif %}">
+            <a href="{% url 'doctor_list' %}" class="sidebar-nav-link" data-tooltip="Register Doctor">
+                <i class="bi bi-person-badge-fill sidebar-nav-icon"></i>
+                <span class="sidebar-nav-text">Register Doctor</span>
+            </a>
+        </div>
+
+
+        <!-- OPD Queue -->
+        <span class="sidebar-section-label">OPD Queue</span>
+        <div class="sidebar-nav-item {% if request.resolver_match.url_name == 'book_token' %}active{% endif %}">
+            <a href="{% url 'book_token' %}" class="sidebar-nav-link" data-tooltip="Book & Print Token">
+                <i class="bi bi-calendar-plus-fill sidebar-nav-icon"></i>
+                <span class="sidebar-nav-text">Book & Print Token</span>
+            </a>
+        </div>
+        <div class="sidebar-nav-item {% if request.resolver_match.url_name == 'today_tokens' %}active{% endif %}">
+            <a href="{% url 'today_tokens' %}" class="sidebar-nav-link" data-tooltip="Today's Tokens">
+                <i class="bi bi-ticket-perforated-fill sidebar-nav-icon"></i>
+                <span class="sidebar-nav-text">Today's Tokens</span>
+            </a>
+        </div>
+        <div class="sidebar-nav-item {% if request.resolver_match.url_name == 'queue_display' %}active{% endif %}">
+            <a href="{% url 'queue_display' %}" class="sidebar-nav-link" data-tooltip="Queue Display">
+                <i class="bi bi-display-fill sidebar-nav-icon"></i>
+                <span class="sidebar-nav-text">Queue Display</span>
+            </a>
+        </div>
+
+        <!-- Finance -->
+        <span class="sidebar-section-label">Finance</span>
+        <div class="sidebar-nav-item {% if request.resolver_match.url_name == 'expenses' %}active{% endif %}">
+            <a href="{% url 'expenses' %}" class="sidebar-nav-link" data-tooltip="Expenses">
+                <i class="bi bi-wallet2 sidebar-nav-icon"></i>
+                <span class="sidebar-nav-text">Expenses</span>
+            </a>
+        </div>
+        <div class="sidebar-nav-item {% if request.resolver_match.url_name == 'add_expense' %}active{% endif %}">
+            <a href="{% url 'add_expense' %}" class="sidebar-nav-link" data-tooltip="Add Expense">
+                <i class="bi bi-journal-plus sidebar-nav-icon"></i>
+                <span class="sidebar-nav-text">Add Expense</span>
+            </a>
+        </div>
+        <div class="sidebar-nav-item {% if request.resolver_match.url_name == 'finance_summary' %}active{% endif %}">
+            <a href="{% url 'finance_summary' %}" class="sidebar-nav-link" data-tooltip="Summary & Charts">
+                <i class="bi bi-pie-chart-fill sidebar-nav-icon"></i>
+                <span class="sidebar-nav-text">Summary & Charts</span>
+            </a>
+        </div>
+
+    </div>
+
+    <!-- FOOTER LOGOUT -->
+    <div class="sidebar-footer">
+        <a href="{% url 'logout' %}" class="sidebar-nav-link" data-tooltip="Logout" style="gap: 10px;">
+            <i class="bi bi-box-arrow-left sidebar-nav-icon" style="color: #f87171;"></i>
+            <span style="color: #f87171;" class="sidebar-nav-text">Logout</span>
+        </a>
+    </div>
+
+</nav>
+
+<div id="mobile-overlay" class="mobile-overlay"></div>
+
+<style>
+    :root {
+        --sidebar-open-width: 250px;
+        --sidebar-collapsed-width: 70px;
+    }
+
+    .erp-sidebar {
+        position: fixed;
+        left: 0;
+        top: 0;
+        width: var(--sidebar-open-width);
+        height: 100vh;
+        background: #0d1635;
+        color: #ffffff;
+        display: flex;
+        flex-direction: column;
+        padding: 18px 12px;
+        z-index: 1200;
+        overflow: hidden;
+        box-shadow: 5px 0 25px rgba(0, 0, 0, .10);
+        transition: width .28s cubic-bezier(.4, 0, .2, 1), transform .28s ease;
+        box-sizing: border-box;
+    }
+
+    .sidebar-brand {
+        display: flex;
+        align-items: center;
+        min-height: 50px;
+        padding: 0 4px;
+        margin-bottom: 16px;
+        flex-shrink: 0;
+    }
+
+    .sidebar-brand-icon {
+        width: 38px;
+        height: 38px;
+        flex-shrink: 0;
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: linear-gradient(135deg, #5b4cff, #3824d8);
+        color: white;
+        font-size: 19px;
+        box-shadow: 0 6px 16px rgba(67, 56, 202, .35);
+    }
+
+    .sidebar-brand-text {
+        display: flex;
+        flex-direction: column;
+        margin-left: 10px;
+        white-space: nowrap;
+        transition: opacity .2s ease, width .2s ease;
+    }
+
+    .brand-name {
+        font-size: 17px;
+        font-weight: 700;
+        line-height: 19px;
+    }
+
+    .brand-sub {
+        font-size: 10.5px;
+        color: #9ca9d1;
+        margin-top: 1px;
+    }
+
+    .sidebar-toggle-btn {
+        margin-left: auto;
+        width: 32px;
+        height: 32px;
+        flex-shrink: 0;
+        border: none;
+        border-radius: 8px;
+        background: rgba(255, 255, 255, .07);
+        color: #b8c3e5;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: background .2s ease, color .2s ease, transform .2s ease;
+    }
+
+    .sidebar-toggle-btn:hover {
+        background: #4338ca;
+        color: white;
+        transform: scale(1.04);
+    }
+
+    .sidebar-nav {
+        flex: 1;
+        overflow-y: auto;
+        overflow-x: hidden;
+        padding-right: 2px;
+        scrollbar-width: thin;
+    }
+
+    .sidebar-nav::-webkit-scrollbar { width: 4px; }
+    .sidebar-nav::-webkit-scrollbar-thumb {
+        background: rgba(255, 255, 255, .12);
+        border-radius: 10px;
+    }
+
+    .sidebar-section-label {
+        display: block;
+        font-size: 10px;
+        font-weight: 700;
+        color: #7785ae;
+        letter-spacing: 1.1px;
+        text-transform: uppercase;
+        padding: 10px 10px 6px;
+        white-space: nowrap;
+    }
+
+    .sidebar-nav-item { margin-bottom: 3px; }
+
+    .sidebar-nav-link {
+        display: flex;
+        align-items: center;
+        width: 100%;
+        min-height: 42px;
+        padding: 0 12px;
+        border-radius: 10px;
+        color: #bfc8e5;
+        text-decoration: none;
+        transition: background .18s ease, color .18s ease, transform .18s ease;
+        white-space: nowrap;
+        box-sizing: border-box;
+    }
+
+    .sidebar-nav-link:hover {
+        background: rgba(255, 255, 255, .07);
+        color: white;
+        transform: translateX(2px);
+    }
+
+    .sidebar-nav-item.active .sidebar-nav-link {
+        background: linear-gradient(135deg, #5146e5, #4033c5);
+        color: white;
+        box-shadow: 0 6px 16px rgba(67, 56, 202, .25);
+    }
+
+    .sidebar-nav-icon {
+        width: 20px;
+        flex-shrink: 0;
+        font-size: 17px;
+        color: #aeb9dc;
+        text-align: center;
+        transition: color .2s ease;
+    }
+
+    .sidebar-nav-link:hover .sidebar-nav-icon,
+    .sidebar-nav-item.active .sidebar-nav-icon {
+        color: white;
+    }
+
+    .sidebar-nav-text {
+        margin-left: 12px;
+        font-size: 13px;
+        font-weight: 500;
+        white-space: nowrap;
+        transition: opacity .18s ease;
+    }
+
+    .sidebar-footer {
+        padding-top: 10px;
+        margin-top: 8px;
+        border-top: 1px solid rgba(255, 255, 255, .08);
+        flex-shrink: 0;
+    }
+
+    /* COLLAPSED STATE */
+    body.sidebar-collapsed .erp-sidebar { width: var(--sidebar-collapsed-width); }
+    body.sidebar-collapsed .sidebar-brand { justify-content: center; }
+    body.sidebar-collapsed .sidebar-brand-text,
+    body.sidebar-collapsed .sidebar-nav-text,
+    body.sidebar-collapsed .sidebar-toggle-btn { display: none; }
+    body.sidebar-collapsed .sidebar-nav-link { justify-content: center; padding: 0; }
+    body.sidebar-collapsed .sidebar-section-label { height: 12px; font-size: 0; padding: 4px 0; opacity: .3; }
+
+    body.sidebar-collapsed.sidebar-hovered .erp-sidebar {
+        width: var(--sidebar-open-width);
+        box-shadow: 10px 0 35px rgba(0, 0, 0, .25);
+    }
+    body.sidebar-collapsed.sidebar-hovered .sidebar-brand { justify-content: flex-start; }
+    body.sidebar-collapsed.sidebar-hovered .sidebar-brand-text,
+    body.sidebar-collapsed.sidebar-hovered .sidebar-nav-text,
+    body.sidebar-collapsed.sidebar-hovered .sidebar-toggle-btn { display: flex; }
+    body.sidebar-collapsed.sidebar-hovered .sidebar-nav-link { justify-content: flex-start; padding: 0 12px; }
+
+    body.sidebar-collapsed:not(.sidebar-hovered) .sidebar-nav-link::after {
+        content: attr(data-tooltip);
+        position: absolute;
+        left: 68px;
+        top: 50%;
+        transform: translateY(-50%);
+        background: #111936;
+        color: white;
+        padding: 6px 10px;
+        border-radius: 6px;
+        font-size: 11px;
+        white-space: nowrap;
+        opacity: 0;
+        pointer-events: none;
+        transition: .15s ease;
+        box-shadow: 0 6px 18px rgba(0, 0, 0, .25);
+        z-index: 5000;
+    }
+    body.sidebar-collapsed:not(.sidebar-hovered) .sidebar-nav-link:hover::after { opacity: 1; }
+
+    .mobile-overlay {
+        position: fixed;
+        inset: 0;
+        background: rgba(0, 0, 0, 0.45);
+        backdrop-filter: blur(2px);
+        z-index: 1150;
+        display: none;
+    }
+    .mobile-overlay.show { display: block; }
+
+    @media (max-width: 768px) {
+        .erp-sidebar { transform: translateX(-100%); width: 250px !important; }
+        .erp-sidebar.mobile-open { transform: translateX(0); }
+        body.sidebar-collapsed .erp-sidebar { transform: translateX(-100%); }
+        body.sidebar-collapsed .erp-sidebar.mobile-open { transform: translateX(0); }
+        body.sidebar-collapsed .sidebar-brand-text,
+        body.sidebar-collapsed .sidebar-nav-text { display: flex; }
+        body.sidebar-collapsed .sidebar-nav-link { justify-content: flex-start; padding: 0 12px; }
+    }
+</style>
+
+<script>
+(function () {
+    const sidebar = document.getElementById("erp-sidebar");
+    const toggleBtn = document.getElementById("sidebar-toggle-btn");
+    const toggleIcon = document.getElementById("sidebar-toggle-icon");
+    const overlay = document.getElementById("mobile-overlay");
+
+    if (!sidebar || !toggleBtn) return;
+
+    let isCollapsed = false;
+
+    function setCollapsed(state) {
+        isCollapsed = state;
+        document.body.classList.toggle("sidebar-collapsed", isCollapsed);
+        document.body.classList.remove("sidebar-hovered");
+        if (toggleIcon) {
+            toggleIcon.className = isCollapsed ? "bi bi-chevron-double-right" : "bi bi-chevron-double-left";
+        }
+    }
+
+    toggleBtn.addEventListener("click", function (e) {
+        e.stopPropagation();
+        if (window.innerWidth <= 768) {
+            sidebar.classList.toggle("mobile-open");
+            if (overlay) overlay.classList.toggle("show");
+            return;
+        }
+        setCollapsed(!isCollapsed);
+    });
+
+    sidebar.addEventListener("mouseenter", function () {
+        if (isCollapsed && window.innerWidth > 768) document.body.classList.add("sidebar-hovered");
+    });
+
+    sidebar.addEventListener("mouseleave", function () {
+        if (isCollapsed && window.innerWidth > 768) document.body.classList.remove("sidebar-hovered");
+    });
+
+    if (overlay) {
+        overlay.addEventListener("click", function () {
+            sidebar.classList.remove("mobile-open");
+            overlay.classList.remove("show");
+        });
+    }
+})();
+</script>

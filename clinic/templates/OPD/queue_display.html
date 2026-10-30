@@ -1,0 +1,74 @@
+{% extends "base.html" %}
+
+{% block content %}
+<!-- Auto-refresh TV Display Every 5 Seconds to reflect live updates -->
+<meta http-equiv="refresh" content="5">
+
+<style>
+    .tv-box { padding: 10px 0 32px 0; width: 100%; box-sizing: border-box; }
+    .tv-grid { display: grid; grid-template-columns: 1.2fr 1fr; gap: 18px; }
+    
+    .serving-card { background: linear-gradient(135deg, #1E3A8A, #2563EB); border-radius: 18px; padding: 36px 24px; color: white; text-align: center; box-shadow: 0 10px 25px rgba(37, 99, 235, 0.3); }
+    .serving-card h4 { margin: 0; font-size: 16px; letter-spacing: 2px; text-transform: uppercase; color: #93C5FD; display: flex; align-items: center; justify-content: center; gap: 8px; }
+    .serving-token { font-size: 105px; font-weight: 900; margin: 15px 0; line-height: 1; text-shadow: 0 4px 14px rgba(0,0,0,0.25); letter-spacing: -2px; }
+    .serving-room { font-size: 22px; font-weight: 800; background: rgba(255,255,255,0.18); padding: 8px 20px; border-radius: 12px; display: inline-block; }
+    .serving-patient { margin-top: 18px; font-size: 17px; font-weight: 700; color: #E0E7FF; }
+
+    .waiting-card { background: #fff; border: 1px solid #E2E8F0; border-radius: 18px; padding: 22px; }
+    .waiting-card h3 { margin: 0 0 16px 0; font-size: 16px; font-weight: 800; color: #0F172A; display: flex; align-items: center; gap: 8px; }
+    .waiting-list { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
+    .w-item { background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 12px; padding: 14px; display: flex; align-items: center; justify-content: space-between; }
+    .w-num { font-size: 24px; font-weight: 900; color: #2563EB; }
+    .w-info { text-align: right; }
+    .w-patient { font-size: 13px; font-weight: 700; color: #0F172A; }
+    .w-doc { font-size: 11px; font-weight: 600; color: #64748B; margin-top: 2px; }
+
+    @media (max-width: 900px) { .tv-grid { grid-template-columns: 1fr; } }
+
+    /* DARK MODE */
+    body.dark-mode .waiting-card { background: #1E293B !important; border-color: #334155 !important; }
+    body.dark-mode .waiting-card h3 { color: #F8FAFC !important; }
+    body.dark-mode .w-item { background: #0F172A; border-color: #334155; }
+    body.dark-mode .w-patient { color: #F8FAFC; }
+    body.dark-mode .w-doc { color: #94A3B8; }
+</style>
+
+<div class="tv-box">
+    <div class="tv-grid">
+        <!-- LIVE NOW SERVING -->
+        <div class="serving-card">
+            <h4><i class="bi bi-broadcast"></i> NOW SERVING</h4>
+            {% if now_serving %}
+                <div class="serving-token">#{{ now_serving.token_number|stringformat:"02d" }}</div>
+                <div class="serving-room">{{ now_serving.room_number }} &bull; {{ now_serving.doctor.name }}</div>
+                <div class="serving-patient">Patient: {{ now_serving.patient.name }} (#{{ now_serving.patient.mr_number }})</div>
+            {% else %}
+                <div class="serving-token" style="font-size: 55px; margin: 30px 0;">--</div>
+                <div class="serving-room">NO PATIENT IN ROOM</div>
+                <div class="serving-patient">Waiting for doctor to call next token</div>
+            {% endif %}
+        </div>
+
+        <!-- UPCOMING IN LINE -->
+        <div class="waiting-card">
+            <h3><i class="bi bi-hourglass-split text-warning"></i> Next In Line (Waiting)</h3>
+            <div class="waiting-list">
+                {% for w in waiting_tokens %}
+                    <div class="w-item">
+                        <span class="w-num">#{{ w.token_number|stringformat:"02d" }}</span>
+                        <div class="w-info">
+                            <div class="w-patient">{{ w.patient.name }}</div>
+                            <div class="w-doc">{{ w.doctor.name }} ({{ w.room_number }})</div>
+                        </div>
+                    </div>
+                {% empty %}
+                    <div style="grid-column: span 2; text-align: center; padding: 40px 10px; color: #64748B;">
+                        <i class="bi bi-cup-hot" style="font-size: 32px; display: block; margin-bottom: 8px; color: #94A3B8;"></i>
+                        Queue is completely clear! No patients in waiting.
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

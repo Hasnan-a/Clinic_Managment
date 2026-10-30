@@ -1,0 +1,511 @@
+{% extends "base.html" %}
+
+{% block content %}
+<!-- Google Fonts & ApexCharts CDN -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
+
+<style>
+    :root {
+        --bg-main: #F8FAFC;
+        --text-dark: #0F172A;
+        --text-muted: #64748B;
+        --border-color: #E2E8F0;
+        --primary-blue: #2563EB;
+        --success-green: #10B981;
+        --purple-accent: #8B5CF6;
+        --amber-accent: #F59E0B;
+        --slate-dark: #334155;
+    }
+
+    .dashboard-container {
+        font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+        background-color: transparent;
+        color: var(--text-dark);
+        padding: 10px 0 32px 0;
+        width: 100%;
+        max-width: 100%;
+        box-sizing: border-box;
+        margin: 0;
+        overflow-x: hidden;
+        transition: background-color 0.25s ease, color 0.25s ease;
+    }
+
+    /* ROW 1: STAT CARDS */
+    .stats-row {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 14px;
+        margin-bottom: 18px;
+        width: 100%;
+        box-sizing: border-box;
+    }
+
+    .stat-box {
+        background: #FFFFFF;
+        border: 1px solid var(--border-color);
+        border-radius: 14px;
+        padding: 16px 18px;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
+        transition: transform 0.2s ease, box-shadow 0.2s ease, background-color 0.25s ease, border-color 0.25s ease;
+        box-sizing: border-box;
+        min-width: 0;
+    }
+
+    .stat-box:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 16px -4px rgba(15, 23, 42, 0.06);
+    }
+
+    .stat-top { display: flex; align-items: center; gap: 12px; margin-bottom: 10px; }
+
+    .stat-avatar {
+        width: 40px; height: 40px; border-radius: 50%;
+        display: flex; align-items: center; justify-content: center;
+        font-size: 18px; flex-shrink: 0;
+    }
+    .stat-avatar.blue { background: #EEF2FF; color: #3B82F6; }
+    .stat-avatar.green { background: #ECFDF5; color: #10B981; }
+    .stat-avatar.purple { background: #F3E8FF; color: #8B5CF6; }
+    .stat-avatar.orange { background: #FFF7ED; color: #EA580C; }
+
+    .stat-titles { min-width: 0; overflow: hidden; }
+    .stat-titles span {
+        display: block; font-size: 11.5px; font-weight: 600; color: var(--text-muted);
+        white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
+    .stat-titles h2 {
+        margin: 2px 0 0; font-size: 21px; font-weight: 800; color: var(--text-dark);
+        letter-spacing: -0.02em; line-height: 1.1;
+    }
+
+    .stat-bottom { display: flex; justify-content: space-between; align-items: center; gap: 6px; }
+    .stat-trend {
+        font-size: 10.5px; font-weight: 700; color: #10B981;
+        display: flex; align-items: center; gap: 3px; white-space: nowrap;
+    }
+    .stat-trend .trend-sub {
+        font-size: 10.5px; font-weight: 500; color: #94A3B8; margin-left: 2px; white-space: nowrap;
+    }
+    .stat-sparkline { width: 60px; height: 24px; flex-shrink: 0; }
+
+    /* ROW 2: CHART + QUICK ACTIONS */
+    .row-middle {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) 290px;
+        gap: 14px;
+        margin-bottom: 18px;
+        width: 100%;
+        box-sizing: border-box;
+    }
+
+    .card-clean {
+        background: #FFFFFF;
+        border: 1px solid var(--border-color);
+        border-radius: 14px;
+        padding: 18px 20px;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
+        box-sizing: border-box;
+        min-width: 0;
+        transition: background-color 0.25s ease, border-color 0.25s ease;
+    }
+
+    .card-header-flex { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+    .card-header-flex h3 {
+        margin: 0; font-size: 15px; font-weight: 700; color: var(--text-dark);
+        display: flex; align-items: center; gap: 8px;
+    }
+
+    .filter-dropdown {
+        background: #FFFFFF; border: 1px solid var(--border-color);
+        padding: 6px 12px; border-radius: 8px; font-size: 11.5px; font-weight: 600;
+        color: var(--text-muted); outline: none; cursor: pointer; transition: all 0.2s ease;
+    }
+    .filter-dropdown:hover, .filter-dropdown:focus { border-color: var(--primary-blue); color: var(--text-dark); }
+
+    .quick-actions-box { display: flex; flex-direction: column; justify-content: space-between; }
+    .quick-btn-list { display: flex; flex-direction: column; gap: 9px; margin-top: 4px; }
+
+    .btn-action {
+        width: 100%; border: none; border-radius: 10px; padding: 11px 15px;
+        font-size: 13px; font-weight: 700; color: #FFFFFF; text-decoration: none;
+        display: flex; align-items: center; gap: 10px; cursor: pointer;
+        transition: transform 0.15s ease, filter 0.15s ease; box-sizing: border-box;
+    }
+    .btn-action:hover { transform: translateY(-2px); filter: brightness(0.94); color: #FFFFFF; }
+    .btn-action.blue { background-color: #2563EB; }
+    .btn-action.green { background-color: #10B981; }
+    .btn-action.purple { background-color: #8B5CF6; }
+    .btn-action.dark { background-color: #334155; }
+    .btn-action i { font-size: 16px; }
+
+    /* ROW 3: TABLES */
+    .row-tables {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 14px;
+        width: 100%;
+        box-sizing: border-box;
+    }
+
+    .table-link-view { color: var(--primary-blue); font-size: 12px; font-weight: 700; text-decoration: none; }
+    .table-link-view:hover { text-decoration: underline; }
+    .table-wrap { overflow-x: auto; margin-top: 8px; }
+
+    .clinic-table { width: 100%; border-collapse: collapse; text-align: left; }
+    .clinic-table th {
+        color: var(--text-muted); font-size: 11px; font-weight: 600;
+        padding: 9px 8px; border-bottom: 1px solid var(--border-color); white-space: nowrap;
+    }
+    .clinic-table td {
+        padding: 11px 8px; font-size: 12px; color: var(--text-dark);
+        border-bottom: 1px solid #F1F5F9; white-space: nowrap; vertical-align: middle;
+        transition: background-color 0.2s ease;
+    }
+    .clinic-table tr:last-child td { border-bottom: none; }
+    .clinic-table tr:hover td { background-color: #FAFAFC; }
+
+    /* STATUS PILLS */
+    .status-pill {
+        display: inline-block; padding: 3px 8px; border-radius: 20px;
+        font-size: 10.5px; font-weight: 700; text-align: center; white-space: nowrap;
+    }
+    .status-completed { background: #DCFCE7; color: #15803D; }
+    .status-inqueue { background: #DBEAFE; color: #1D4ED8; }
+    .status-waiting { background: #F1F5F9; color: #64748B; }
+    .status-scheduled { background: #DBEAFE; color: #1D4ED8; }
+    .status-cancelled { background: #FEE2E2; color: #B91C1C; }
+
+    /* DARK MODE */
+    body.dark-mode { background-color: #0B132B !important; }
+    body.dark-mode .dashboard-container { color: #F8FAFC; }
+
+    body.dark-mode .stat-box,
+    body.dark-mode .card-clean {
+        background-color: #1E293B !important;
+        border-color: #334155 !important;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.25) !important;
+    }
+
+    body.dark-mode .stat-titles h2,
+    body.dark-mode .card-header-flex h3,
+    body.dark-mode .clinic-table td { color: #F8FAFC !important; }
+
+    body.dark-mode .stat-titles span,
+    body.dark-mode .clinic-table th { color: #94A3B8 !important; }
+
+    body.dark-mode .clinic-table td { border-bottom-color: #334155 !important; }
+    body.dark-mode .clinic-table tr:hover td { background-color: #273549 !important; }
+
+    body.dark-mode .filter-dropdown {
+        background-color: #0F172A !important;
+        border-color: #334155 !important;
+        color: #E2E8F0 !important;
+    }
+
+    body.dark-mode .status-waiting { background: #334155 !important; color: #CBD5E1 !important; }
+    body.dark-mode .status-completed { background: rgba(16, 185, 129, 0.2) !important; color: #34D399 !important; }
+    body.dark-mode .status-inqueue,
+    body.dark-mode .status-scheduled { background: rgba(37, 99, 235, 0.2) !important; color: #60A5FA !important; }
+    body.dark-mode .status-cancelled { background: rgba(239, 68, 68, 0.2) !important; color: #F87171 !important; }
+
+    body.dark-mode .stat-avatar.blue { background: rgba(59, 130, 246, 0.18); color: #60A5FA; }
+    body.dark-mode .stat-avatar.green { background: rgba(16, 185, 129, 0.18); color: #34D399; }
+    body.dark-mode .stat-avatar.purple { background: rgba(139, 92, 246, 0.18); color: #A78BFA; }
+    body.dark-mode .stat-avatar.orange { background: rgba(245, 158, 11, 0.18); color: #FBBF24; }
+
+    /* RESPONSIVE */
+    @media (max-width: 1100px) {
+        .stats-row { grid-template-columns: repeat(2, 1fr); }
+        .row-middle { grid-template-columns: 1fr; }
+        .row-tables { grid-template-columns: 1fr; }
+    }
+    @media (max-width: 600px) {
+        .stats-row { grid-template-columns: 1fr; }
+    }
+</style>
+
+<div class="dashboard-container">
+
+    <!-- 1. ROW 1: 4 STAT CARDS -->
+    <div class="stats-row">
+
+        <!-- Card 1: Total Patients -->
+        <div class="stat-box">
+            <div class="stat-top">
+                <div class="stat-avatar blue"><i class="bi bi-people-fill"></i></div>
+                <div class="stat-titles">
+                    <span>Total Patients</span>
+                    <h2>{{ total_patients|floatformat:"0g" }}</h2>
+                </div>
+            </div>
+           
+        </div>
+
+        <!-- Card 2: Today's Tokens -->
+        <div class="stat-box">
+            <div class="stat-top">
+                <div class="stat-avatar green"><i class="bi bi-ticket-perforated-fill"></i></div>
+                <div class="stat-titles">
+                    <span>Today's Tokens</span>
+                    <h2>{{ today_tokens_count }}</h2>
+                </div>
+            </div>
+        
+        </div>
+
+        <!-- Card 3: Queue Waiting -->
+        <div class="stat-box">
+            <div class="stat-top">
+                <div class="stat-avatar purple"><i class="bi bi-display-fill"></i></div>
+                <div class="stat-titles">
+                    <span>Queue In Waiting</span>
+                    <h2>{{ waiting_count }}</h2>
+                </div>
+            </div>
+           
+        </div>
+
+        <!-- Card 4: Expenses (is mahine ke) -->
+        <div class="stat-box">
+            <div class="stat-top">
+                <div class="stat-avatar orange"><i class="bi bi-wallet2"></i></div>
+                <div class="stat-titles">
+                    <span>Expenses (This Month)</span>
+                    <h2>Rs. {{ month_expense|floatformat:"0g" }}</h2>
+                </div>
+            </div>
+         
+        </div>
+
+    </div>
+
+    <!-- 2. ROW 2: OPD OVERVIEW + QUICK ACTIONS -->
+    <div class="row-middle">
+
+        <div class="card-clean">
+            <div class="card-header-flex">
+                <h3><i class="bi bi-bar-chart-line-fill text-primary"></i> OPD & Token Overview</h3>
+                <select class="filter-dropdown" id="opdRange">
+                    <option value="week" selected>Last 7 Days (Week)</option>
+                    <option value="month">This Month (By Week)</option>
+                    <option value="year">This Year (Monthly)</option>
+                </select>
+            </div>
+            <div id="opdOverviewChart" style="min-height: 235px;"></div>
+        </div>
+
+        <div class="card-clean quick-actions-box">
+            <div class="card-header-flex" style="margin-bottom: 4px;">
+                <h3><i class="bi bi-lightning-charge-fill text-warning"></i> Quick Actions</h3>
+            </div>
+            <div class="quick-btn-list">
+                <a href="{% url 'register_patient' %}" class="btn-action blue">
+                    <i class="bi bi-person-plus-fill"></i><span>Register Patient</span>
+                </a>
+                <a href="{% url 'book_token' %}" class="btn-action green">
+                    <i class="bi bi-calendar-plus-fill"></i><span>Book & Print Token</span>
+                </a>
+                <a href="{% url 'queue_display' %}" class="btn-action purple">
+                    <i class="bi bi-display-fill"></i><span>Queue Display</span>
+                </a>
+                <a href="{% url 'add_expense' %}" class="btn-action dark">
+                    <i class="bi bi-journal-plus"></i><span>Add Expense</span>
+                </a>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- 3. ROW 3: TABLES -->
+    <div class="row-tables">
+
+        <!-- Left: Today's Tokens -->
+        <div class="card-clean">
+            <div class="card-header-flex">
+                <h3><i class="bi bi-ticket-perforated-fill text-primary"></i> Today's Tokens</h3>
+                <a href="{% url 'today_tokens' %}" class="table-link-view">View All</a>
+            </div>
+            <div class="table-wrap">
+                <table class="clinic-table">
+                    <thead>
+                        <tr>
+                            <th>Token #</th>
+                            <th>Patient Name</th>
+                            <th>Age / Gender</th>
+                            <th>Phone</th>
+                            <th>Time</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for t in recent_tokens %}
+                        <tr>
+                            <td style="font-weight: 700; color: var(--primary-blue);">#{{ t.token_number|stringformat:"02d" }}</td>
+                            <td style="font-weight: 600;">{{ t.patient.name }}</td>
+                            <td>{{ t.patient.age }} / {{ t.patient.gender }}</td>
+                            <td>{{ t.patient.phone }}</td>
+                            <td>{{ t.created_at|date:"h:i A" }}</td>
+                            <td>
+                                <span class="status-pill {% if t.status == 'Completed' %}status-completed{% elif t.status == 'Serving' %}status-inqueue{% elif t.status == 'Cancelled' %}status-cancelled{% else %}status-waiting{% endif %}">
+                                    {{ t.status }}
+                                </span>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="6" style="text-align:center; padding:22px; color: var(--text-muted);">
+                                Aaj abhi koi token nahi bana.
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Right: Queue Status -->
+        <div class="card-clean">
+            <div class="card-header-flex">
+                <h3><i class="bi bi-display-fill text-primary"></i> Queue Display Status</h3>
+                <a href="{% url 'queue_display' %}" class="table-link-view">View All</a>
+            </div>
+            <div class="table-wrap">
+                <table class="clinic-table">
+                    <thead>
+                        <tr>
+                            <th>Token</th>
+                            <th>Patient</th>
+                            <th>Doctor</th>
+                            <th>Department</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for t in queue_tokens %}
+                        <tr>
+                            <td style="font-weight: 700; color: var(--primary-blue);">#{{ t.token_number|stringformat:"02d" }}</td>
+                            <td>{{ t.patient.name }}</td>
+                            <td>{{ t.doctor.name|default:"-" }}</td>
+                            <td>{{ t.doctor.specialization|default:"-" }}</td>
+                            <td>
+                                <span class="status-pill {% if t.status == 'Serving' %}status-inqueue{% else %}status-waiting{% endif %}">
+                                    {{ t.status }}
+                                </span>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="5" style="text-align:center; padding:22px; color: var(--text-muted);">
+                                Queue khali hai, koi mareez intezar mein nahi.
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+    </div>
+
+</div>
+
+{{ chart_data|json_script:"opd-chart-data" }}
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+
+    // Backend se aaya hua asli data
+    const chartDataSets = JSON.parse(document.getElementById("opd-chart-data").textContent);
+
+    const isDarkInitial = document.body.classList.contains("dark-mode");
+    const current = chartDataSets.week;
+
+    const options = {
+        chart: {
+            type: 'area',
+            height: 235,
+            fontFamily: "'Plus Jakarta Sans', sans-serif",
+            toolbar: { show: false },
+            zoom: { enabled: false },
+            animations: { enabled: true, easing: 'easeinout', speed: 500 }
+        },
+        theme: { mode: isDarkInitial ? 'dark' : 'light' },
+        colors: ['#2563EB'],
+        series: [{ name: current.name, data: current.data }],
+        xaxis: {
+            categories: current.categories,
+            axisBorder: { show: false },
+            axisTicks: { show: false },
+            labels: { style: { colors: '#94A3B8', fontSize: '11.5px', fontWeight: 600 } }
+        },
+        yaxis: {
+            min: 0,
+            forceNiceScale: true,
+            labels: {
+                style: { colors: '#94A3B8', fontSize: '11.5px', fontWeight: 600 },
+                formatter: function (val) { return Math.round(val); }
+            }
+        },
+        stroke: { curve: 'smooth', width: 2.8 },
+        fill: {
+            type: 'gradient',
+            gradient: { shadeIntensity: 1, opacityFrom: 0.35, opacityTo: 0.02, stops: [0, 95, 100] }
+        },
+        markers: {
+            size: 4.5,
+            colors: ['#2563EB'],
+            strokeColors: '#FFFFFF',
+            strokeWidth: 2,
+            hover: { size: 6.5 }
+        },
+        grid: {
+            borderColor: isDarkInitial ? '#334155' : '#F1F5F9',
+            strokeDashArray: 0,
+            yaxis: { lines: { show: true } },
+            xaxis: { lines: { show: false } }
+        },
+        tooltip: {
+            theme: isDarkInitial ? 'dark' : 'light',
+            y: { formatter: function (val) { return val + " Tokens"; } }
+        },
+        dataLabels: { enabled: false }
+    };
+
+    const chart = new ApexCharts(document.querySelector("#opdOverviewChart"), options);
+    chart.render();
+
+    // Dark mode toggle ke saath chart ka theme badlo
+    function syncChartTheme(isDark) {
+        chart.updateOptions({
+            theme: { mode: isDark ? 'dark' : 'light' },
+            grid: { borderColor: isDark ? '#334155' : '#F1F5F9' },
+            tooltip: { theme: isDark ? 'dark' : 'light' }
+        });
+    }
+
+    new MutationObserver(function (mutations) {
+        mutations.forEach(function (m) {
+            if (m.attributeName === "class") {
+                syncChartTheme(document.body.classList.contains("dark-mode"));
+            }
+        });
+    }).observe(document.body, { attributes: true });
+
+    // Week / Month / Year dropdown
+    const rangeSelect = document.getElementById("opdRange");
+    if (rangeSelect) {
+        rangeSelect.addEventListener("change", function () {
+            const target = chartDataSets[this.value];
+            if (!target) return;
+            chart.updateOptions({
+                xaxis: { categories: target.categories },
+                series: [{ name: target.name, data: target.data }]
+            });
+        });
+    }
+});
+</script>
+{% endblock %}

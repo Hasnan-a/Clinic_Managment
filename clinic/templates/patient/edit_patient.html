@@ -1,0 +1,119 @@
+{% extends "base.html" %}
+
+{% block content %}
+<style>
+    .form-container { padding: 12px 0 32px 0; max-width: 900px; margin: 0 auto; box-sizing: border-box; }
+    .form-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+    .form-header h2 { font-size: 20px; font-weight: 800; color: #0F172A; margin: 0; }
+    .btn-back { color: #64748B; text-decoration: none; font-size: 13px; font-weight: 600; display: inline-flex; align-items: center; gap: 6px; padding: 8px 12px; border: 1px solid #E2E8F0; border-radius: 8px; background: #fff; }
+    .btn-back:hover { color: #0F172A; border-color: #CBD5E1; }
+
+    .form-card { background: #fff; border: 1px solid #E2E8F0; border-radius: 14px; padding: 24px; box-shadow: 0 1px 3px rgba(0,0,0,0.02); }
+    .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px; }
+    .form-group { display: flex; flex-direction: column; gap: 6px; margin-bottom: 16px; }
+    .form-group label { font-size: 12.5px; font-weight: 700; color: #334155; }
+    .form-group input, .form-group select, .form-group textarea {
+        padding: 10px 14px; border: 1px solid #E2E8F0; border-radius: 9px; font-size: 13px; outline: none; background: #fff; color: #0F172A;
+    }
+    .form-group input:focus, .form-group select:focus, .form-group textarea:focus {
+        border-color: #2563EB; box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+    }
+    .form-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 10px; }
+    .btn-save { background: #2563EB; color: white; border: none; padding: 10px 20px; border-radius: 9px; font-size: 13px; font-weight: 700; cursor: pointer; }
+    .btn-save:hover { background: #1D4ED8; }
+    .btn-cancel { background: #F1F5F9; color: #475569; text-decoration: none; padding: 10px 18px; border-radius: 9px; font-size: 13px; font-weight: 600; }
+
+    .mr-badge { background: #EFF6FF; color: #2563EB; padding: 4px 10px; border-radius: 6px; font-weight: 800; font-size: 12px; display: inline-block; }
+
+    /* DARK MODE */
+    body.dark-mode .form-header h2 { color: #F8FAFC; }
+    body.dark-mode .form-card { background: #1E293B; border-color: #334155; }
+    body.dark-mode .form-group label { color: #94A3B8; }
+    body.dark-mode .form-group input, body.dark-mode .form-group select, body.dark-mode .form-group textarea {
+        background: #0F172A; border-color: #334155; color: #F8FAFC;
+    }
+    body.dark-mode .btn-back, body.dark-mode .btn-cancel { background: #0F172A; border-color: #334155; color: #94A3B8; }
+</style>
+
+<div class="form-container">
+    <div class="form-header">
+        <div>
+            <h2>Edit Patient: {{ patient.name }}</h2>
+            <span class="mr-badge">MR Number: #{{ patient.mr_number }}</span>
+        </div>
+        <a href="{% url 'patient_list' %}" class="btn-back">
+            <i class="bi bi-arrow-left"></i> Back to Patients
+        </a>
+    </div>
+
+    <div class="form-card">
+        <form method="POST">
+            {% csrf_token %}
+            
+            <div class="grid-2">
+                <div class="form-group">
+                    <label>Full Name *</label>
+                    <input type="text" name="name" value="{{ patient.name }}" required>
+                </div>
+                <div class="form-group">
+                    <label>Phone Number *</label>
+                    <input type="text" name="phone" value="{{ patient.phone }}" required>
+                </div>
+            </div>
+
+            <div class="grid-2">
+                <div class="form-group">
+                    <label>Age (Years) *</label>
+                    <input type="number" name="age" value="{{ patient.age }}" min="0" max="150" required>
+                </div>
+                <div class="form-group">
+                    <label>Gender *</label>
+                    <select name="gender" required>
+                        <option value="Male" {% if patient.gender == 'Male' %}selected{% endif %}>Male</option>
+                        <option value="Female" {% if patient.gender == 'Female' %}selected{% endif %}>Female</option>
+                        <option value="Other" {% if patient.gender == 'Other' %}selected{% endif %}>Other</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="grid-2">
+                <div class="form-group">
+                    <label>Blood Group</label>
+                    <select name="blood_group">
+                        <option value="" {% if not patient.blood_group %}selected{% endif %}>Unknown</option>
+                        <option value="A+" {% if patient.blood_group == 'A+' %}selected{% endif %}>A+</option>
+                        <option value="A-" {% if patient.blood_group == 'A-' %}selected{% endif %}>A-</option>
+                        <option value="B+" {% if patient.blood_group == 'B+' %}selected{% endif %}>B+</option>
+                        <option value="B-" {% if patient.blood_group == 'B-' %}selected{% endif %}>B-</option>
+                        <option value="O+" {% if patient.blood_group == 'O+' %}selected{% endif %}>O+</option>
+                        <option value="O-" {% if patient.blood_group == 'O-' %}selected{% endif %}>O-</option>
+                        <option value="AB+" {% if patient.blood_group == 'AB+' %}selected{% endif %}>AB+</option>
+                        <option value="AB-" {% if patient.blood_group == 'AB-' %}selected{% endif %}>AB-</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>CNIC / Identity Card Number</label>
+                    <input type="text" name="cnic" value="{{ patient.cnic|default:'' }}">
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label>Emergency Contact Name / Phone</label>
+                <input type="text" name="emergency_contact" value="{{ patient.emergency_contact }}">
+            </div>
+
+            <div class="form-group">
+                <label>Residential Address</label>
+                <textarea name="address" rows="3">{{ patient.address }}</textarea>
+            </div>
+
+            <div class="form-actions">
+                <a href="{% url 'patient_list' %}" class="btn-cancel">Cancel</a>
+                <button type="submit" class="btn-save">
+                    <i class="bi bi-check2-circle"></i> Save Changes
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,109 @@
+{% extends "base.html" %}
+
+{% block content %}
+<script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
+
+<style>
+    .fin-box { padding: 12px 0 32px 0; width: 100%; box-sizing: border-box; }
+    .fin-top { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; margin-bottom: 16px; }
+    .fin-top h2 { margin: 0; font-size: 20px; font-weight: 800; color: #0F172A; }
+    .month-form { display: flex; gap: 8px; align-items: center; }
+    .month-form input { padding: 9px 10px; border: 1px solid #E2E8F0; border-radius: 8px; font-size: 13px; background: #fff; color: #0F172A; }
+    .month-form button { background: #0F172A; color: #fff; border: none; padding: 9px 16px; border-radius: 8px; font-size: 13px; font-weight: 700; cursor: pointer; }
+
+    .kpi-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; margin-bottom: 18px; }
+    .kpi-card { background: #fff; border: 1px solid #E2E8F0; border-radius: 14px; padding: 18px; }
+    .kpi-card span { font-size: 12px; font-weight: 600; color: #64748B; }
+    .kpi-card h2 { margin: 6px 0 0; font-size: 24px; font-weight: 800; }
+    .kpi-card small { color: #64748B; font-size: 11.5px; }
+
+    .chart-grid { display: grid; grid-template-columns: 1.5fr 1fr; gap: 16px; }
+    .chart-card { background: #fff; border: 1px solid #E2E8F0; border-radius: 14px; padding: 20px; }
+    .chart-card h3 { margin: 0 0 14px 0; font-size: 15px; font-weight: 700; color: #0F172A; }
+    .no-data { text-align: center; color: #64748B; font-size: 13px; padding: 80px 0; }
+
+    @media (max-width: 900px) { .kpi-grid, .chart-grid { grid-template-columns: 1fr; } }
+
+    /* DARK MODE */
+    body.dark-mode .kpi-card, body.dark-mode .chart-card { background: #1E293B !important; border-color: #334155 !important; }
+    body.dark-mode .chart-card h3, body.dark-mode .fin-top h2 { color: #F8FAFC !important; }
+    body.dark-mode .month-form input { background: #0F172A; border-color: #334155; color: #F8FAFC; }
+    body.dark-mode .month-form button { background: #2563EB; }
+</style>
+
+<div class="fin-box">
+    <div class="fin-top">
+        <h2>Finance Summary</h2>
+        <form method="GET" class="month-form">
+            <input type="month" name="month" value="{{ month_value }}">
+            <button type="submit">Show</button>
+        </form>
+    </div>
+
+    <div class="kpi-grid">
+        <div class="kpi-card">
+            <span>Total Revenue (OPD Fees)</span>
+            <h2 style="color: #10B981;">Rs. {{ total_revenue|floatformat:"0g" }}</h2>
+            <small>{{ token_count }} tokens</small>
+        </div>
+        <div class="kpi-card">
+            <span>Total Expenses</span>
+            <h2 style="color: #EF4444;">Rs. {{ total_expense|floatformat:"0g" }}</h2>
+            <small>{{ expense_count }} vouchers</small>
+        </div>
+        <div class="kpi-card">
+            <span>Net Profit</span>
+            <h2 style="color: {% if net_profit >= 0 %}#2563EB{% else %}#DC2626{% endif %};">Rs. {{ net_profit|floatformat:"0g" }}</h2>
+            <small>Margin: {{ margin }}%</small>
+        </div>
+    </div>
+
+    <div class="chart-grid">
+        <div class="chart-card">
+            <h3>Revenue vs Expense Comparison</h3>
+            <div id="finComparisonChart" style="min-height: 250px;"></div>
+        </div>
+
+        <div class="chart-card">
+            <h3>Expense Breakdown</h3>
+            <div id="finDonutChart" style="min-height: 250px;"></div>
+        </div>
+    </div>
+</div>
+
+{{ chart_data|json_script:"chart-data" }}
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+    const isDark = document.body.classList.contains("dark-mode");
+    const data = JSON.parse(document.getElementById("chart-data").textContent);
+
+    // 1. Comparison Bar Chart
+    new ApexCharts(document.querySelector("#finComparisonChart"), {
+        chart: { type: 'bar', height: 250, toolbar: { show: false } },
+        colors: ['#10B981', '#EF4444'],
+        series: [
+            { name: 'Revenue', data: data.revenue },
+            { name: 'Expense', data: data.expense }
+        ],
+        xaxis: { categories: data.weeks },
+        dataLabels: { enabled: false },
+        theme: { mode: isDark ? 'dark' : 'light' }
+    }).render();
+
+    // 2. Donut Chart
+    const donutEl = document.querySelector("#finDonutChart");
+    if (data.cat_values.length === 0) {
+        donutEl.innerHTML = '<div class="no-data">Is mahine koi expense nahi hai.</div>';
+    } else {
+        new ApexCharts(donutEl, {
+            chart: { type: 'donut', height: 250 },
+            series: data.cat_values,
+            labels: data.cat_labels,
+            colors: ['#2563EB', '#10B981', '#F59E0B', '#8B5CF6', '#EF4444', '#06B6D4'],
+            theme: { mode: isDark ? 'dark' : 'light' }
+        }).render();
+    }
+});
+</script>
+{% endblock %}

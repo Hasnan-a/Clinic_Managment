@@ -1,0 +1,1159 @@
+
+{% load static %}
+
+<header id="erp-navbar" class="erp-navbar" role="banner">
+
+    <!-- GLOBAL SEARCH -->
+    <div class="navbar-search" role="search">
+        <i class="bi bi-search navbar-search-icon"></i>
+
+        <input
+            type="search"
+            class="navbar-search-input"
+            id="global-search"
+            placeholder="Search patients, doctors, tokens, expenses..."
+            aria-label="Global search"
+            autocomplete="off"
+        >
+
+        <div
+            id="global-search-results"
+            class="global-search-results"
+            role="listbox"
+            aria-label="Search results"
+        ></div>
+    </div>
+
+    <!-- NAVBAR ACTIONS -->
+    <div class="navbar-actions">
+
+    
+
+        <!-- DARK MODE -->
+        <button
+            class="navbar-action-btn"
+            id="dark-mode-btn"
+            type="button"
+            aria-label="Toggle dark mode"
+            title="Toggle dark mode"
+        >
+            <i id="dark-mode-icon" class="bi bi-moon"></i>
+        </button>
+
+        <!-- USER PROFILE -->
+        <div class="user-wrapper">
+
+            <button
+                class="navbar-user"
+                id="user-menu-btn"
+                type="button"
+                aria-expanded="false"
+                aria-controls="user-menu"
+            >
+                <div class="navbar-avatar" id="navbar-avatar">
+                    {% if request.user.is_authenticated %}
+                        {{ request.user.get_username|first|upper }}
+                    {% else %}
+                        U
+                    {% endif %}
+                </div>
+
+                <div class="navbar-user-info">
+                    <span class="navbar-user-name">
+                        {% if request.user.is_authenticated %}
+                            {{ request.user.get_full_name|default:request.user.get_username }}
+                        {% else %}
+                            Guest
+                        {% endif %}
+                    </span>
+
+                    <span class="navbar-user-role">
+                        {% if request.user.is_authenticated %}
+                            {% if request.user.is_superuser %}
+                                Administrator
+                            {% elif request.user.is_staff %}
+                                Staff
+                            {% else %}
+                                User
+                            {% endif %}
+                        {% else %}
+                            Not logged in
+                        {% endif %}
+                    </span>
+                </div>
+
+                <i class="bi bi-chevron-down navbar-user-chevron"></i>
+            </button>
+
+            <!-- USER MENU -->
+            <div class="user-menu" id="user-menu">
+
+                <div class="user-menu-heading">
+                    <strong>
+                        {% if request.user.is_authenticated %}
+                            {{ request.user.get_full_name|default:request.user.get_username }}
+                        {% else %}
+                            Guest
+                        {% endif %}
+                    </strong>
+                    <small>
+                        {% if request.user.is_authenticated %}
+                            {{ request.user.email|default:"Clinic account" }}
+                        {% else %}
+                            Please sign in
+                        {% endif %}
+                    </small>
+                </div>
+
+                <hr>
+
+                    <hr>
+
+                 
+                     
+                        <a href="{% url 'logout' %}" style="list-style: none; text-decoration: none;">
+                        <button type="submit" class="logout-button">
+                            <i class="bi bi-box-arrow-right"></i>
+                            Logout
+                        </button>
+                   </a>
+
+              
+            </div>
+        </div>
+    </div>
+</header>
+
+<!-- DATE RANGE PANEL -->
+<div
+    id="date-range-panel"
+    class="date-range-panel"
+    aria-label="Date range filter"
+>
+    <div class="date-panel-heading">
+        <div>
+            <strong>Filter by date</strong>
+            <small>Choose a preset or custom range</small>
+        </div>
+
+        <button
+            type="button"
+            id="dr-close"
+            class="date-close-btn"
+            aria-label="Close date filter"
+        >
+            <i class="bi bi-x-lg"></i>
+        </button>
+    </div>
+
+    <div class="date-input-row">
+        <div>
+            <label for="dr-from">From</label>
+            <input
+                type="date"
+                class="form-input-erp"
+                id="dr-from"
+            >
+        </div>
+
+        <div>
+            <label for="dr-to">To</label>
+            <input
+                type="date"
+                class="form-input-erp"
+                id="dr-to"
+            >
+        </div>
+    </div>
+
+    <div class="date-presets">
+        <button type="button" class="btn-erp date-preset" data-preset="today">Today</button>
+        <button type="button" class="btn-erp date-preset" data-preset="yesterday">Yesterday</button>
+        <button type="button" class="btn-erp date-preset" data-preset="week">This Week</button>
+        <button type="button" class="btn-erp date-preset" data-preset="month">This Month</button>
+        <button type="button" class="btn-erp date-preset" data-preset="quarter">This Quarter</button>
+        <button type="button" class="btn-erp date-preset" data-preset="year">This Year</button>
+    </div>
+
+    <div id="date-filter-error" class="date-filter-error" role="alert"></div>
+
+    <div class="date-panel-buttons">
+        <button type="button" class="btn-erp" id="dr-cancel">Cancel</button>
+        <button type="button" class="btn-erp btn-erp-primary" id="dr-apply">
+            Apply Filter
+        </button>
+    </div>
+</div>
+
+<style>
+    /* NAVBAR */
+    .erp-navbar {
+        position: sticky;
+        top: 0;
+        min-height: 65px;
+        background: rgba(255, 255, 255, .96);
+        backdrop-filter: blur(12px);
+        border-bottom: 1px solid #e5e7eb;
+        display: flex;
+        align-items: center;
+        gap: 18px;
+        padding: 10px 20px;
+        z-index: 1100;
+        transition: background .25s ease, border-color .25s ease;
+    }
+
+    .navbar-search {
+        position: relative;
+        width: 350px;
+        max-width: 100%;
+        flex-shrink: 1;
+    }
+
+    .navbar-search-icon {
+        position: absolute;
+        left: 14px;
+        top: 50%;
+        transform: translateY(-50%);
+        color: #6b7280;
+        z-index: 2;
+    }
+
+    .navbar-search-input {
+        width: 100%;
+        height: 42px;
+        box-sizing: border-box;
+        border: 1px solid #e5e7eb;
+        border-radius: 10px;
+        padding: 0 15px 0 42px;
+        outline: none;
+        font-size: 13px;
+        background: #fff;
+        color: #111827;
+        transition: border-color .2s ease, box-shadow .2s ease;
+    }
+
+    .navbar-search-input:focus {
+        border-color: #4318ff;
+        box-shadow: 0 0 0 3px rgba(67, 24, 255, .08);
+    }
+
+    /* SEARCH RESULTS */
+    .global-search-results {
+        position: absolute;
+        left: 0;
+        top: calc(100% + 7px);
+        width: 100%;
+        max-height: 390px;
+        overflow-y: auto;
+        box-sizing: border-box;
+        background: #fff;
+        border: 1px solid #e5e7eb;
+        border-radius: 11px;
+        box-shadow: 0 12px 35px rgba(0, 0, 0, .13);
+        display: none;
+        z-index: 5000;
+    }
+
+    .global-search-results.show {
+        display: block;
+    }
+
+    .global-search-item {
+        display: block;
+        padding: 11px 14px;
+        color: #111827;
+        text-decoration: none;
+        border-bottom: 1px solid #f1f3f7;
+        transition: background .15s ease;
+    }
+
+    .global-search-item:last-child {
+        border-bottom: 0;
+    }
+
+    .global-search-item:hover,
+    .global-search-item:focus {
+        background: #f5f7ff;
+        outline: none;
+    }
+
+    .global-search-item-title {
+        display: block;
+        font-size: 13px;
+        font-weight: 700;
+    }
+
+    .global-search-item-subtitle {
+        display: block;
+        margin-top: 4px;
+        color: #6b7280;
+        font-size: 11px;
+    }
+
+    .global-search-item-type {
+        display: inline-block;
+        margin-bottom: 4px;
+        color: #4318ff;
+        font-size: 10px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: .04em;
+    }
+
+    .search-empty {
+        padding: 15px;
+        color: #6b7280;
+        text-align: center;
+        font-size: 12px;
+    }
+
+    /* NAVBAR ACTIONS */
+    .navbar-actions {
+        margin-left: auto;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    }
+
+    .navbar-action-btn {
+        height: 40px;
+        width: 40px;
+        flex-shrink: 0;
+        border: 1px solid #e5e7eb;
+        background: #fff;
+        color: #374151;
+        border-radius: 9px;
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 16px;
+        transition: background .18s ease, border-color .18s ease, transform .18s ease;
+    }
+
+    .navbar-action-btn:hover {
+        background: #f5f7fb;
+        border-color: #d1d5db;
+    }
+
+    .navbar-action-btn:active {
+        transform: scale(.96);
+    }
+
+    /* USER DROPDOWN */
+    .user-wrapper {
+        position: relative;
+    }
+
+    .navbar-user {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        cursor: pointer;
+        padding: 4px 8px;
+        border-radius: 10px;
+        border: none;
+        background: transparent;
+        transition: background .2s ease;
+    }
+
+    .navbar-user:hover {
+        background: #f3f4f6;
+    }
+
+    .navbar-avatar {
+        width: 36px;
+        height: 36px;
+        flex-shrink: 0;
+        border-radius: 50%;
+        background: #4318ff;
+        color: #fff;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 700;
+        font-size: 14px;
+    }
+
+    .navbar-user-name {
+        display: block;
+        max-width: 180px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        font-size: 13px;
+        font-weight: 700;
+        color: #111827;
+        text-align: left;
+    }
+
+    .navbar-user-role {
+        display: block;
+        font-size: 11px;
+        color: #6b7280;
+        text-align: left;
+    }
+
+    .navbar-user-chevron {
+        font-size: 11px;
+        color: #6b7280;
+    }
+
+    .user-menu {
+        position: absolute;
+        right: 0;
+        top: calc(100% + 10px);
+        width: 230px;
+        background: #fff;
+        border-radius: 12px;
+        box-shadow: 0 15px 40px rgba(0, 0, 0, .12);
+        border: 1px solid #e5e7eb;
+        display: none;
+        z-index: 5000;
+        padding: 6px;
+    }
+
+    .user-menu.show {
+        display: block;
+        animation: dropdownIn .16s ease;
+    }
+
+    .user-menu-heading {
+        padding: 10px 12px;
+        overflow-wrap: anywhere;
+    }
+
+    .user-menu-heading strong,
+    .user-menu-heading small {
+        display: block;
+    }
+
+    .user-menu-heading strong {
+        color: #111827;
+        font-size: 13px;
+    }
+
+    .user-menu-heading small {
+        color: #6b7280;
+        font-size: 11px;
+        margin-top: 4px;
+    }
+
+    .user-menu a {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 10px 12px;
+        color: #374151;
+        text-decoration: none;
+        border-radius: 8px;
+        font-size: 13px;
+        font-weight: 500;
+        transition: background .15s ease;
+    }
+
+    .user-menu a:hover {
+        background: #f3f4f6;
+    }
+
+    .user-menu hr {
+        border: none;
+        border-top: 1px solid #e5e7eb;
+        margin: 5px 0;
+    }
+
+    .navbar-logout-form {
+        margin: 0;
+    }
+
+    .logout-button {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        width: 100%;
+        padding: 10px 12px;
+        border: 0;
+        background: transparent;
+        color: #ef4444;
+        border-radius: 8px;
+        text-align: left;
+        font-size: 13px;
+        cursor: pointer;
+    }
+
+    .logout-button:hover {
+        background: #fef2f2;
+    }
+
+    /* DATE PANEL */
+    .date-range-panel {
+        position: fixed;
+        top: 75px;
+        right: 20px;
+        width: 330px;
+        max-width: calc(100vw - 30px);
+        box-sizing: border-box;
+        background: #fff;
+        border-radius: 12px;
+        padding: 16px;
+        box-shadow: 0 15px 40px rgba(0, 0, 0, .15);
+        border: 1px solid #e5e7eb;
+        z-index: 4000;
+        display: none;
+    }
+
+    .date-range-panel.show {
+        display: block;
+        animation: dropdownIn .16s ease;
+    }
+
+    .date-panel-heading {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 12px;
+        margin-bottom: 16px;
+    }
+
+    .date-panel-heading strong,
+    .date-panel-heading small {
+        display: block;
+    }
+
+    .date-panel-heading strong {
+        font-size: 14px;
+        color: #111827;
+    }
+
+    .date-panel-heading small {
+        margin-top: 4px;
+        color: #6b7280;
+        font-size: 11px;
+    }
+
+    .date-close-btn {
+        border: 0;
+        background: transparent;
+        color: #6b7280;
+        cursor: pointer;
+        padding: 4px;
+    }
+
+    .date-input-row {
+        display: flex;
+        gap: 10px;
+        margin-bottom: 14px;
+    }
+
+    .date-input-row > div {
+        flex: 1;
+        min-width: 0;
+    }
+
+    .date-input-row label {
+        display: block;
+        font-size: 11px;
+        font-weight: 600;
+        color: #6b7280;
+        margin-bottom: 5px;
+    }
+
+    .form-input-erp {
+        width: 100%;
+        height: 38px;
+        box-sizing: border-box;
+        border: 1px solid #ddd;
+        border-radius: 8px;
+        padding: 0 8px;
+        outline: none;
+        font-size: 12px;
+        background: #fff;
+        color: #111827;
+    }
+
+    .form-input-erp:focus {
+        border-color: #4318ff;
+        box-shadow: 0 0 0 3px rgba(67, 24, 255, .08);
+    }
+
+    .date-presets {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 7px;
+        margin-bottom: 14px;
+    }
+
+    .btn-erp {
+        border: 1px solid #ddd;
+        background: #fff;
+        color: #374151;
+        border-radius: 7px;
+        padding: 7px 10px;
+        font-size: 12px;
+        font-weight: 500;
+        cursor: pointer;
+        transition: .18s ease;
+    }
+
+    .btn-erp:hover,
+    .btn-erp.active {
+        background: #f0edff;
+        border-color: #4318ff;
+        color: #4318ff;
+    }
+
+    .btn-erp-primary {
+        background: #4318ff;
+        color: #fff;
+        border-color: #4318ff;
+    }
+
+    .btn-erp-primary:hover {
+        background: #3512d0;
+        color: #fff;
+    }
+
+    .date-panel-buttons {
+        display: flex;
+        justify-content: flex-end;
+        gap: 8px;
+    }
+
+    .date-filter-error {
+        display: none;
+        color: #dc2626;
+        font-size: 12px;
+        margin: 0 0 12px;
+    }
+
+    .date-filter-error.show {
+        display: block;
+    }
+
+    @keyframes dropdownIn {
+        from { opacity: 0; transform: translateY(-5px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* DARK MODE */
+    body.dark-mode .erp-navbar {
+        background: rgba(17, 24, 39, .96);
+        border-color: #273244;
+    }
+
+    body.dark-mode .navbar-search-input,
+    body.dark-mode .navbar-action-btn,
+    body.dark-mode .btn-erp,
+    body.dark-mode .form-input-erp {
+        background: #1f2937;
+        border-color: #374151;
+        color: #e5e7eb;
+    }
+
+    body.dark-mode .navbar-search-input::placeholder {
+        color: #9ca3af;
+    }
+
+    body.dark-mode .navbar-user:hover {
+        background: #1f2937;
+    }
+
+    body.dark-mode .navbar-user-name,
+    body.dark-mode .date-panel-heading strong,
+    body.dark-mode .user-menu-heading strong {
+        color: #f3f4f6;
+    }
+
+    body.dark-mode .user-menu,
+    body.dark-mode .date-range-panel,
+    body.dark-mode .global-search-results {
+        background: #1f2937;
+        border-color: #374151;
+    }
+
+    body.dark-mode .user-menu a,
+    body.dark-mode .logout-button,
+    body.dark-mode .global-search-item {
+        color: #e5e7eb;
+    }
+
+    body.dark-mode .user-menu a:hover,
+    body.dark-mode .global-search-item:hover,
+    body.dark-mode .global-search-item:focus {
+        background: #374151;
+    }
+
+    body.dark-mode .user-menu-heading small,
+    body.dark-mode .date-panel-heading small,
+    body.dark-mode .date-input-row label,
+    body.dark-mode .global-search-item-subtitle {
+        color: #9ca3af;
+    }
+
+    body.dark-mode .global-search-item {
+        border-bottom-color: #374151;
+    }
+
+    body.dark-mode .user-menu hr {
+        border-color: #374151;
+    }
+
+    body.dark-mode .btn-erp.active {
+        background: #312e81;
+        color: #c4b5fd;
+    }
+
+    /* RESPONSIVE */
+    @media (max-width: 850px) {
+        .navbar-search {
+            width: 260px;
+        }
+
+        .navbar-actions {
+            gap: 8px;
+        }
+    }
+
+    @media (max-width: 640px) {
+        .erp-navbar {
+            gap: 8px;
+            padding: 10px 12px;
+        }
+
+        .navbar-search {
+            width: auto;
+            flex: 1;
+            min-width: 0;
+        }
+
+        .navbar-search-input {
+            font-size: 12px;
+            padding-left: 35px;
+        }
+
+        .navbar-search-icon {
+            left: 11px;
+        }
+
+        .navbar-actions {
+            gap: 6px;
+        }
+
+        .navbar-action-btn {
+            width: 36px;
+            height: 36px;
+        }
+
+        .navbar-user-info,
+        .navbar-user-chevron {
+            display: none;
+        }
+
+        .navbar-user {
+            padding: 2px;
+        }
+
+        .date-range-panel {
+            right: 10px;
+            top: 72px;
+        }
+    }
+
+    @media (max-width: 380px) {
+        .navbar-search-input {
+            padding-right: 5px;
+            font-size: 11px;
+        }
+
+        .date-presets {
+            gap: 5px;
+        }
+
+        .btn-erp {
+            padding: 7px 8px;
+        }
+    }
+</style>
+
+<script>
+(function () {
+    "use strict";
+
+    const $ = (selector) => document.querySelector(selector);
+
+    /* 1. DARK MODE WITH PERSISTENCE */
+    const darkModeButton = $("#dark-mode-btn");
+    const darkModeIcon = $("#dark-mode-icon");
+
+    function applyTheme(isDark) {
+        document.body.classList.toggle("dark-mode", isDark);
+
+        if (darkModeIcon) {
+            darkModeIcon.classList.toggle("bi-moon", !isDark);
+            darkModeIcon.classList.toggle("bi-sun", isDark);
+        }
+
+        if (darkModeButton) {
+            darkModeButton.setAttribute(
+                "aria-label",
+                isDark ? "Switch to light mode" : "Switch to dark mode"
+            );
+        }
+    }
+
+    let savedTheme = null;
+
+    try {
+        savedTheme = localStorage.getItem("clinic-theme");
+    } catch (error) {
+        // Continue if browser storage is unavailable.
+    }
+
+    applyTheme(savedTheme === "dark");
+
+    if (darkModeButton) {
+        darkModeButton.addEventListener("click", function () {
+            const isDark = !document.body.classList.contains("dark-mode");
+            applyTheme(isDark);
+
+            try {
+                localStorage.setItem("clinic-theme", isDark ? "dark" : "light");
+            } catch (error) {
+                // Theme still works for the current page.
+            }
+        });
+    }
+
+    /* 2. USER DROPDOWN */
+    const userButton = $("#user-menu-btn");
+    const userMenu = $("#user-menu");
+
+    if (userButton && userMenu) {
+        userButton.addEventListener("click", function (event) {
+            event.stopPropagation();
+
+            const isOpen = userMenu.classList.toggle("show");
+            userButton.setAttribute("aria-expanded", String(isOpen));
+        });
+    }
+
+    /* 3. GLOBAL SEARCH */
+    const searchInput = $("#global-search");
+    const searchResults = $("#global-search-results");
+
+    let searchController = null;
+    let searchTimer = null;
+
+    function hideSearchResults() {
+        if (!searchResults) return;
+
+        searchResults.classList.remove("show");
+        searchResults.replaceChildren();
+    }
+
+    function showSearchMessage(message) {
+        if (!searchResults) return;
+
+        searchResults.replaceChildren();
+
+        const empty = document.createElement("div");
+        empty.className = "search-empty";
+        empty.textContent = message;
+
+        searchResults.appendChild(empty);
+        searchResults.classList.add("show");
+    }
+
+    function renderSearchResults(results) {
+        if (!searchResults) return;
+
+        searchResults.replaceChildren();
+
+        if (!results.length) {
+            showSearchMessage("No matching records found.");
+            return;
+        }
+
+        results.forEach(function (item) {
+            const link = document.createElement("a");
+            link.className = "global-search-item";
+            link.href = item.url || "#";
+
+            const type = document.createElement("span");
+            type.className = "global-search-item-type";
+            type.textContent = item.type || "Record";
+
+            const title = document.createElement("span");
+            title.className = "global-search-item-title";
+            title.textContent = item.title || "Untitled";
+
+            const subtitle = document.createElement("span");
+            subtitle.className = "global-search-item-subtitle";
+            subtitle.textContent = item.subtitle || "";
+
+            link.append(type, title, subtitle);
+            searchResults.appendChild(link);
+        });
+
+        searchResults.classList.add("show");
+    }
+
+    async function performSearch(query) {
+        if (!searchResults) return;
+
+        if (query.length < 2) {
+            hideSearchResults();
+            return;
+        }
+
+        if (searchController) {
+            searchController.abort();
+        }
+
+        searchController = new AbortController();
+
+        showSearchMessage("Searching...");
+
+        try {
+            const response = await fetch(
+                "{% url 'global_search' %}?q=" + encodeURIComponent(query),
+                {
+                    method: "GET",
+                    headers: { "X-Requested-With": "XMLHttpRequest" },
+                    signal: searchController.signal
+                }
+            );
+
+            if (!response.ok) {
+                throw new Error("Search request failed.");
+            }
+
+            const data = await response.json();
+            renderSearchResults(Array.isArray(data.results) ? data.results : []);
+
+        } catch (error) {
+            if (error.name !== "AbortError") {
+                showSearchMessage("Search is unavailable. Please try again.");
+            }
+        }
+    }
+
+    if (searchInput && searchResults) {
+        searchInput.addEventListener("input", function () {
+            clearTimeout(searchTimer);
+
+            const query = searchInput.value.trim();
+
+            searchTimer = setTimeout(function () {
+                performSearch(query);
+            }, 250);
+        });
+
+        searchInput.addEventListener("keydown", function (event) {
+            if (event.key === "Escape") {
+                hideSearchResults();
+                searchInput.blur();
+            }
+        });
+    }
+
+    /* 4. DATE RANGE FILTER */
+    const datePanel = $("#date-range-panel");
+    const dateToggle = $("#date-range-toggle");
+    const dateFrom = $("#dr-from");
+    const dateTo = $("#dr-to");
+    const dateApply = $("#dr-apply");
+    const dateCancel = $("#dr-cancel");
+    const dateClose = $("#dr-close");
+    const dateError = $("#date-filter-error");
+    const presetButtons = document.querySelectorAll(".date-preset");
+
+    function formatDate(date) {
+        const year = date.getFullYear();
+        const month = String(date.getMonth() + 1).padStart(2, "0");
+        const day = String(date.getDate()).padStart(2, "0");
+
+        return `${year}-${month}-${day}`;
+    }
+
+    function setDateRange(from, to, selectedButton) {
+        dateFrom.value = formatDate(from);
+        dateTo.value = formatDate(to);
+
+        presetButtons.forEach(function (button) {
+            button.classList.toggle("active", button === selectedButton);
+        });
+
+        if (dateError) {
+            dateError.textContent = "";
+            dateError.classList.remove("show");
+        }
+    }
+
+    function applyPreset(preset, button) {
+        const today = new Date();
+        const start = new Date(today);
+        const end = new Date(today);
+
+        switch (preset) {
+            case "today":
+                break;
+
+            case "yesterday":
+                start.setDate(start.getDate() - 1);
+                end.setDate(end.getDate() - 1);
+                break;
+
+            case "week": {
+                const day = (today.getDay() + 6) % 7;
+                start.setDate(today.getDate() - day);
+                break;
+            }
+
+            case "month":
+                start.setDate(1);
+                break;
+
+            case "quarter": {
+                const firstMonth = Math.floor(today.getMonth() / 3) * 3;
+                start.setMonth(firstMonth, 1);
+                break;
+            }
+
+            case "year":
+                start.setMonth(0, 1);
+                break;
+
+            default:
+                return;
+        }
+
+        setDateRange(start, end, button);
+    }
+
+    function closeDatePanel() {
+        if (datePanel) {
+            datePanel.classList.remove("show");
+        }
+    }
+
+    if (dateToggle && datePanel) {
+        dateToggle.addEventListener("click", function (event) {
+            event.stopPropagation();
+
+            const isOpen = datePanel.classList.toggle("show");
+
+            if (isOpen && !dateFrom.value && !dateTo.value) {
+                const today = new Date();
+                setDateRange(today, today, null);
+            }
+        });
+    }
+
+    presetButtons.forEach(function (button) {
+        button.addEventListener("click", function () {
+            applyPreset(button.dataset.preset, button);
+        });
+    });
+
+    if (dateApply) {
+        dateApply.addEventListener("click", function () {
+            const from = dateFrom.value;
+            const to = dateTo.value;
+
+            if (!from || !to) {
+                dateError.textContent = "Please select both start and end dates.";
+                dateError.classList.add("show");
+                return;
+            }
+
+            if (from > to) {
+                dateError.textContent = "Start date cannot be after end date.";
+                dateError.classList.add("show");
+                return;
+            }
+
+            /*
+             * The dashboard must read these query parameters in its Django view.
+             * This reload sends the selected range to the server.
+             */
+            const url = new URL(window.location.href);
+            url.searchParams.set("from", from);
+            url.searchParams.set("to", to);
+
+            window.location.assign(url.toString());
+        });
+    }
+
+    if (dateCancel) {
+        dateCancel.addEventListener("click", closeDatePanel);
+    }
+
+    if (dateClose) {
+        dateClose.addEventListener("click", closeDatePanel);
+    }
+
+    /* Restore an already-applied date range from the current URL. */
+    try {
+        const params = new URLSearchParams(window.location.search);
+        const from = params.get("from");
+        const to = params.get("to");
+
+        if (from && to && dateFrom && dateTo) {
+            dateFrom.value = from;
+            dateTo.value = to;
+        }
+    } catch (error) {
+        // Keep the filter usable even if URL parsing fails.
+    }
+
+    /* 5. CLOSE MENUS WHEN CLICKING OUTSIDE */
+    document.addEventListener("click", function (event) {
+        if (userMenu && userButton &&
+            !userMenu.contains(event.target) &&
+            !userButton.contains(event.target)) {
+            userMenu.classList.remove("show");
+            userButton.setAttribute("aria-expanded", "false");
+        }
+
+        if (datePanel &&
+            !datePanel.contains(event.target) &&
+            dateToggle &&
+            !dateToggle.contains(event.target)) {
+            closeDatePanel();
+        }
+
+        if (searchResults && searchInput &&
+            !searchResults.contains(event.target) &&
+            !searchInput.contains(event.target)) {
+            hideSearchResults();
+        }
+    });
+
+    /* 6. SLASH KEY FOCUSES SEARCH */
+    document.addEventListener("keydown", function (event) {
+        const target = event.target;
+
+        if (
+            event.key === "/" &&
+            searchInput &&
+            !event.ctrlKey &&
+            !event.metaKey &&
+            !event.altKey &&
+            target &&
+            !["INPUT", "TEXTAREA", "SELECT"].includes(target.tagName) &&
+            !target.isContentEditable
+        ) {
+            event.preventDefault();
+            searchInput.focus();
+        }
+
+        if (event.key === "Escape") {
+            if (userMenu) userMenu.classList.remove("show");
+            if (userButton) userButton.setAttribute("aria-expanded", "false");
+            closeDatePanel();
+        }
+    });
+
+})();
+</script>

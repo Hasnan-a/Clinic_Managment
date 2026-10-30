@@ -1,0 +1,174 @@
+{% extends "base.html" %}
+
+{% block content %}
+<style>
+    .page-box { padding: 12px 0 32px 0; width: 100%; box-sizing: border-box; }
+    .page-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; flex-wrap: wrap; gap: 12px; }
+    .page-top h2 { font-size: 20px; font-weight: 800; color: #0F172A; margin: 0; }
+    .page-top p { font-size: 13px; color: #64748B; margin: 2px 0 0; }
+    .btn-create { background: #2563EB; color: white; padding: 9px 16px; border-radius: 9px; font-size: 13px; font-weight: 700; text-decoration: none; display: inline-flex; align-items: center; gap: 7px; }
+    .btn-create:hover { background: #1D4ED8; color: white; }
+
+    /* ALERT BANNER */
+    .alert-banner { padding: 12px 16px; border-radius: 10px; margin-bottom: 16px; font-size: 13px; font-weight: 600; display: flex; align-items: center; gap: 8px; }
+    .alert-success { background: #F0FDF4; color: #16A34A; border: 1px solid #BBF7D0; }
+    .alert-error { background: #FEF2F2; color: #DC2626; border: 1px solid #FECACA; }
+
+    .card-wrap { background: #fff; border: 1px solid #E2E8F0; border-radius: 14px; padding: 18px; box-shadow: 0 1px 3px rgba(0,0,0,0.02); }
+    .filter-bar { display: flex; gap: 10px; margin-bottom: 16px; flex-wrap: wrap; align-items: center; }
+    .search-inp { flex: 1; min-width: 220px; padding: 9px 14px; border: 1px solid #E2E8F0; border-radius: 9px; font-size: 13px; outline: none; }
+    .select-inp { padding: 9px 12px; border: 1px solid #E2E8F0; border-radius: 9px; font-size: 13px; color: #475569; outline: none; background: #fff; cursor: pointer; }
+    .btn-search { background: #0F172A; color: white; border: none; padding: 9px 16px; border-radius: 9px; font-size: 13px; font-weight: 600; cursor: pointer; }
+    .btn-reset { color: #64748B; text-decoration: none; font-size: 13px; padding: 9px 12px; border: 1px solid #E2E8F0; border-radius: 9px; background: #fff; }
+
+    .table-res { overflow-x: auto; }
+    .c-table { width: 100%; border-collapse: collapse; text-align: left; }
+    .c-table th { font-size: 11px; font-weight: 700; color: #64748B; text-transform: uppercase; padding: 10px 12px; border-bottom: 1px solid #E2E8F0; white-space: nowrap; }
+    .c-table td { padding: 12px; font-size: 12.5px; color: #0F172A; border-bottom: 1px solid #F1F5F9; vertical-align: middle; white-space: nowrap; }
+    .c-table tr:hover td { background: #FAFAFC; }
+    
+    .p-avatar { width: 34px; height: 34px; border-radius: 50%; background: #EFF6FF; color: #2563EB; display: inline-flex; align-items: center; justify-content: center; font-weight: 700; font-size: 12px; margin-right: 8px; flex-shrink: 0; }
+    .badge-blood { background: #FEE2E2; color: #DC2626; padding: 3px 8px; border-radius: 6px; font-weight: 700; font-size: 11px; }
+
+    /* ACTION BUTTONS */
+    .actions-group { display: flex; align-items: center; justify-content: flex-end; gap: 5px; }
+    .action-icon { padding: 6px 8px; border-radius: 7px; text-decoration: none; border: 1px solid #E2E8F0; font-size: 13px; display: inline-flex; align-items: center; justify-content: center; transition: all 0.15s ease-in-out; }
+    .action-icon.view-btn { color: #64748B; }
+    .action-icon.view-btn:hover { color: #2563EB; border-color: #2563EB; background: #EFF6FF; }
+    .action-icon.edit-btn { color: #0284C7; }
+    .action-icon.edit-btn:hover { color: #0369A1; border-color: #0284C7; background: #F0F9FF; }
+    .action-icon.delete-btn { color: #EF4444; }
+    .action-icon.delete-btn:hover { color: #DC2626; border-color: #EF4444; background: #FEF2F2; }
+
+    /* DARK MODE */
+    body.dark-mode .page-top h2, body.dark-mode .c-table td { color: #F8FAFC !important; }
+    body.dark-mode .card-wrap { background: #1E293B !important; border-color: #334155 !important; }
+    body.dark-mode .search-inp, body.dark-mode .select-inp, body.dark-mode .btn-reset { background: #0F172A; border-color: #334155; color: #F8FAFC; }
+    body.dark-mode .c-table th { color: #94A3B8; border-color: #334155; }
+    body.dark-mode .c-table td { border-color: #334155; }
+    body.dark-mode .c-table tr:hover td { background: #273549; }
+    body.dark-mode .action-icon { border-color: #334155; }
+    body.dark-mode .action-icon.view-btn:hover { background: #1E3A8A; }
+    body.dark-mode .action-icon.edit-btn:hover { background: #075985; }
+    body.dark-mode .action-icon.delete-btn:hover { background: #991B1B; }
+</style>
+
+<div class="page-box">
+    <div class="page-top">
+        <div>
+            <h2>Patients Directory ({{ total_count }})</h2>
+            <p>Manage all registered clinic patients and their medical history.</p>
+        </div>
+        <a href="{% url 'register_patient' %}" class="btn-create">
+            <i class="bi bi-person-plus-fill"></i> Register Patient
+        </a>
+    </div>
+
+    <!-- DJANGO FLASH MESSAGES -->
+    {% if messages %}
+        {% for message in messages %}
+            <div class="alert-banner alert-{{ message.tags }}">
+                <i class="bi bi-check-circle-fill"></i> {{ message }}
+            </div>
+        {% endfor %}
+    {% endif %}
+
+    <div class="card-wrap">
+        <!-- LIVE SEARCH & FILTER FORM -->
+        <form method="GET" action="{% url 'patient_list' %}" class="filter-bar">
+            <input type="text" name="q" value="{{ search_query }}" class="search-inp" placeholder="Search by MR#, Name, Phone or CNIC...">
+            
+            <select name="gender" class="select-inp" onchange="this.form.submit()">
+                <option value="">All Genders</option>
+                <option value="Male" {% if gender_filter == 'Male' %}selected{% endif %}>Male</option>
+                <option value="Female" {% if gender_filter == 'Female' %}selected{% endif %}>Female</option>
+                <option value="Other" {% if gender_filter == 'Other' %}selected{% endif %}>Other</option>
+            </select>
+
+            <select name="blood_group" class="select-inp" onchange="this.form.submit()">
+                <option value="">All Blood Groups</option>
+                <option value="A+" {% if blood_filter == 'A+' %}selected{% endif %}>A+</option>
+                <option value="A-" {% if blood_filter == 'A-' %}selected{% endif %}>A-</option>
+                <option value="B+" {% if blood_filter == 'B+' %}selected{% endif %}>B+</option>
+                <option value="B-" {% if blood_filter == 'B-' %}selected{% endif %}>B-</option>
+                <option value="O+" {% if blood_filter == 'O+' %}selected{% endif %}>O+</option>
+                <option value="O-" {% if blood_filter == 'O-' %}selected{% endif %}>O-</option>
+                <option value="AB+" {% if blood_filter == 'AB+' %}selected{% endif %}>AB+</option>
+                <option value="AB-" {% if blood_filter == 'AB-' %}selected{% endif %}>AB-</option>
+            </select>
+
+            <button type="submit" class="btn-search"><i class="bi bi-search"></i> Search</button>
+            {% if search_query or gender_filter or blood_filter %}
+                <a href="{% url 'patient_list' %}" class="btn-reset" title="Clear Filters"><i class="bi bi-x-circle"></i> Clear</a>
+            {% endif %}
+        </form>
+
+        <div class="table-res">
+            <table class="c-table">
+                <thead>
+                    <tr>
+                        <th>MR Number</th>
+                        <th>Patient Name</th>
+                        <th>Age / Gender</th>
+                        <th>Contact</th>
+                        <th>Blood Group</th>
+                        <th>Registered Date</th>
+                        <th style="text-align: right;">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <!-- REAL DATABASE PATIENT LOOP -->
+                    {% for patient in patients %}
+                    <tr>
+                        <td><strong style="color: #2563EB;">#{{ patient.mr_number }}</strong></td>
+                        <td>
+                            <div style="display: flex; align-items: center;">
+                                <span class="p-avatar">{{ patient.initials }}</span>
+                                <strong>{{ patient.name }}</strong>
+                            </div>
+                        </td>
+                        <td>{{ patient.age }} Yrs / {{ patient.gender }}</td>
+                        <td>{{ patient.phone }}</td>
+                        <td>
+                            {% if patient.blood_group %}
+                                <span class="badge-blood">{{ patient.blood_group }}</span>
+                            {% else %}
+                                <span style="color: #94A3B8; font-size: 11px;">N/A</span>
+                            {% endif %}
+                        </td>
+                        <td>{{ patient.created_at|date:"M d, Y" }}</td>
+                        <td style="text-align: right;">
+                            <div class="actions-group">
+                                <!-- VIEW PROFILE -->
+                                <a href="#" class="action-icon view-btn" title="View Patient Details">
+                                    <i class="bi bi-eye"></i>
+                                </a>
+                                <!-- EDIT RECORD -->
+                                <a href="{% url 'edit_patient' patient.id %}" class="action-icon edit-btn" title="Edit Patient Details">
+                                    <i class="bi bi-pencil-square"></i>
+                                </a>
+                                <!-- DELETE RECORD WITH CONFIRMATION -->
+                                <a href="{% url 'delete_patient' patient.id %}" 
+                                   class="action-icon delete-btn" 
+                                   title="Delete Patient" 
+                                   onclick="return confirm('Kya aap waqai {{ patient.name }} ({{ patient.mr_number }}) ko delete karna chahte hain? Ye action wapis nahi ho sakega.');">
+                                    <i class="bi bi-trash"></i>
+                                </a>
+                            </div>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="7" style="text-align: center; padding: 40px 10px; color: #64748B;">
+                            <i class="bi bi-people" style="font-size: 36px; display: block; margin-bottom: 8px; color: #94A3B8;"></i>
+                            No patients found in database. 
+                            <a href="{% url 'register_patient' %}" style="color: #2563EB; font-weight: 700; text-decoration: none;">Register the first patient now!</a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}
